@@ -80,6 +80,9 @@ def _validate_production_environment():
     if not database_url.startswith(('postgres://', 'postgresql://')):
         raise RuntimeError('Production requires DATABASE_URL pointing to PostgreSQL.')
 
+    ProductionConfig.SECRET_KEY = os.environ.get('SECRET_KEY')
+    ProductionConfig.SQLALCHEMY_DATABASE_URI = database_url.replace('postgres://', 'postgresql://')
+
 
 def pick_config():
     name = os.environ.get('FLASK_CONFIG')

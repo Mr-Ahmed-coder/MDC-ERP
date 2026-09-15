@@ -2,6 +2,7 @@ Flask==3.1.3
 Flask-SQLAlchemy==3.1.1
 Flask-Migrate==4.0.7
 waitress==3.0.2            # Windows production server
+gunicorn==23.0.0            # Linux WSGI production server
 qrcode==8.0                # verification QR codes on printed documents
 python-barcode==0.15.1     # Code-128 barcodes (MRN, invoice no.)
 openpyxl==3.1.5            # Excel exports (TB, GL, AR/AP, budgets)

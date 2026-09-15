@@ -203,9 +203,9 @@ def _register_security_headers(app):
         resp.headers.setdefault('Referrer-Policy', 'same-origin')
         resp.headers.setdefault(
             'Content-Security-Policy',
-            "default-src 'self'; style-src 'self' 'unsafe-inline'; "
+            "default-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; "
             "script-src 'self' 'unsafe-inline'; img-src 'self' data:; "
-            "font-src 'self' data:; frame-ancestors 'self'; form-action 'self'"
+            "font-src 'self' data: https://fonts.gstatic.com; frame-ancestors 'self'; form-action 'self'"
         )
         # Emit HSTS whenever the secure (production) config is active — this also
         # covers the Postgres-URL auto-production path, not just FLASK_CONFIG=production.

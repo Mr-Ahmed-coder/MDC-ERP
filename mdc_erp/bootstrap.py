@@ -329,14 +329,12 @@ def init_db(app, demo=False):
             ensure_levels(_m)
         db.session.commit()
         from .models import User
-        if not User.query.filter((User.username == 'admin') | (User.role == 'super_admin')).first():
-            import os
-            initial_password = os.environ.get('INITIAL_ADMIN_PASSWORD', '')
-            force_change = True
+        admin_user = User.query.filter((User.username == 'admin') | (User.role == 'super_admin')).first()
+        initial_password = os.environ.get('INITIAL_ADMIN_PASSWORD', '')
+        if not admin_user:
+            force_change = not bool(initial_password)
             if not initial_password:
-                if app.config.get('TESTING', False):
-                    initial_password = 'admin123'
-                elif app.config.get('DEBUG', False):
+                if app.config.get('TESTING', False) or app.config.get('DEBUG', False):
                     initial_password = 'admin123'
                     force_change = False
                 else:
@@ -346,10 +344,18 @@ def init_db(app, demo=False):
             if len(initial_password) < minimum_length:
                 import secrets
                 initial_password = initial_password + secrets.token_hex(6)
+            branch = Branch.query.first()
+            branch_id = branch.id if branch else None
             db.session.add(User(username='admin', name='System Administrator',
                                 role='super_admin', pw=generate_password_hash(initial_password),
-                                active=True, branch_id=Branch.query.first().id,
+                                active=True, branch_id=branch_id,
                                 must_change_pw=force_change))
+            db.session.commit()
+        elif initial_password:
+            # Sync password with environment variable so live login succeeds on Render
+            admin_user.pw = generate_password_hash(initial_password)
+            admin_user.active = True
+            admin_user.must_change_pw = False
             db.session.commit()
         for k,v in [('company','Modern Diagnostic Center'),('currency','$'),('capital','0'),('vat','0'),('appname','MDC ERP'),('logo',''),('brand',''),('paper','A4'),('print_header',''),('print_footer','Thank you for choosing us.'),('dev_mode','0'),('rad_fee','10'),('login_logo',''),('login_bg',''),('favicon',''),('wm_on','1'),('ph_on','1'),('pf_on','1'),('wm_text','')]:
             if not Setting.query.get(k): db.session.add(Setting(key=k,value=v))

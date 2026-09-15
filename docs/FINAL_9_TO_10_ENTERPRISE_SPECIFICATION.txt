@@ -1,0 +1,1112 @@
+MDC Diagnostic ERP — Final 9.0 → 10.0 Enterprise Upgrade
+
+OBJECTIVE
+
+Upgrade the existing MDC Diagnostic ERP Enterprise Spec from its current advanced state into a production-grade, enterprise-level Healthcare ERP/HIS.
+
+The existing system already contains extensive healthcare, accounting, inventory, procurement, HR, radiology, laboratory, API, reporting and administration functionality.
+
+IMPORTANT
+
+DO NOT rebuild the application from scratch.
+
+DO NOT remove existing working functionality.
+
+DO NOT duplicate existing modules.
+
+First inspect the current codebase and identify what already exists.
+
+Only implement missing, incomplete, inconsistent, insecure or weak areas.
+
+All existing functionality must continue to work after the upgrade.
+
+---
+
+PHASE 1 — SECURITY HARDENING
+
+Make security production-grade.
+
+Remove all insecure defaults
+
+Remove:
+
+- Default passwords
+- Default admin credentials
+- Hardcoded JWT secrets
+- Hardcoded database passwords
+- Development secrets
+- Production fallback secrets
+
+Production startup must FAIL if required secrets are missing.
+
+Use environment variables or secure secret management.
+
+Authentication
+
+Implement:
+
+- Strong password policy
+- Password hashing
+- Login rate limiting
+- Brute-force protection
+- Account lockout
+- Login attempt logging
+- Session rotation
+- Session timeout
+- Secure logout
+- Password reset workflow
+- First-login password change
+- Admin-reset password change
+- Optional 2FA
+- Mandatory 2FA for super administrators
+
+Web security
+
+Production must enforce:
+
+- HTTPS
+- Secure cookies
+- HttpOnly
+- SameSite
+- CSRF protection
+- HSTS
+- CSP
+- X-Frame-Options
+- X-Content-Type-Options
+- Secure CORS
+
+Never use insecure development settings in production.
+
+---
+
+PHASE 2 — CENTRALIZED RBAC
+
+Create one authoritative:
+
+Role & Permission Registry
+
+Every role referenced anywhere in the system must exist in this registry.
+
+Every permission must be defined centrally.
+
+Support:
+
+- View
+- Create
+- Edit
+- Delete
+- Approve
+- Verify
+- Post
+- Reverse
+- Cancel
+- Refund
+- Export
+- Print
+- Configure
+
+Create permissions for every major module.
+
+Examples:
+
+PATIENT_VIEW
+PATIENT_CREATE
+PATIENT_EDIT
+
+LAB_ORDER_CREATE
+LAB_RESULT_ENTER
+LAB_RESULT_VERIFY
+LAB_RESULT_APPROVE
+
+RADIOLOGY_ORDER_CREATE
+RADIOLOGY_REPORT_CREATE
+RADIOLOGY_REPORT_APPROVE
+
+INVOICE_CREATE
+INVOICE_APPROVE
+PAYMENT_CREATE
+REFUND_CREATE
+
+INVENTORY_VIEW
+INVENTORY_RECEIVE
+INVENTORY_ISSUE
+INVENTORY_TRANSFER
+INVENTORY_ADJUST
+
+ACCOUNTING_VIEW
+ACCOUNTING_POST
+ACCOUNTING_REVERSE
+ACCOUNTING_CLOSE_PERIOD
+
+Apply least-privilege access.
+
+Prevent privilege escalation.
+
+---
+
+PHASE 3 — MULTI-BRANCH DATA ISOLATION
+
+Make multi-branch support fully enforceable.
+
+Every relevant record should support:
+
+Organization
+Branch
+Department
+User
+
+Users must only access records belonging to their authorized branch/organization.
+
+Management users can have cross-branch visibility.
+
+Test for cross-branch data leakage.
+
+---
+
+PHASE 4 — AUDIT & DATA TRACEABILITY
+
+Create an immutable audit trail.
+
+Track:
+
+- User
+- Role
+- Timestamp
+- IP
+- Device/session
+- Module
+- Action
+- Record ID
+- Old value
+- New value
+- Reason
+
+Audit:
+
+- Patients
+- Clinical records
+- Lab results
+- Radiology reports
+- Invoices
+- Payments
+- Refunds
+- Discounts
+- Accounting journals
+- Inventory movements
+- Procurement
+- HR
+- Permissions
+- System configuration
+
+Final clinical and financial records must never be silently deleted or overwritten.
+
+Use:
+
+Active
+Cancelled
+Voided
+Reversed
+Archived
+
+where appropriate.
+
+---
+
+PHASE 5 — ACCOUNTING INTEGRITY
+
+Make accounting completely reliable.
+
+Every financial transaction must satisfy:
+
+TOTAL DEBIT = TOTAL CREDIT
+
+Automatically generate accounting entries for:
+
+- Sales
+- Consultation
+- Laboratory
+- Radiology
+- CT
+- MRI
+- Pharmacy
+- Procedures
+- Payments
+- Refunds
+- Discounts
+- Credit notes
+- Debit notes
+- Purchases
+- Inventory
+- COGS
+- Expenses
+- Assets
+- Depreciation
+- Supplier payments
+- Bank transactions
+
+Implement:
+
+- Journal approval
+- Journal posting
+- Journal reversal
+- Fiscal periods
+- Period locking
+- Year-end closing
+- Controlled reopening
+
+No unauthorized user may edit posted accounting entries.
+
+Posted transactions must be reversed, not silently modified.
+
+---
+
+PHASE 6 — INVENTORY ACCURACY
+
+Upgrade inventory to:
+
+Multi-Warehouse + Batch + Expiry + FEFO + Serial Tracking
+
+Support:
+
+- Batch numbers
+- Expiry dates
+- Serial numbers
+- Minimum stock
+- Maximum stock
+- Reorder point
+- Safety stock
+- Stock valuation
+- Stock adjustment
+- Stock transfer
+- Stock consumption
+- Stock return
+- Damaged stock
+- Expired stock
+- Wastage
+- Stock count
+
+FEFO
+
+Implement:
+
+First Expiry, First Out
+
+Automatically prioritize batches with the earliest expiry.
+
+---
+
+PHASE 7 — CT CONTRAST CONTROL
+
+Create a complete contrast inventory workflow.
+
+CT Order
+↓
+Contrast Required?
+↓
+Select Contrast
+↓
+Select Batch
+↓
+Record Quantity
+↓
+Perform CT
+↓
+Automatically Deduct Stock
+↓
+Record Batch
+↓
+Record Expiry
+↓
+Record Operator
+↓
+Record Patient
+↓
+Record Cost
+
+If contrast is not required:
+
+Do NOT deduct contrast inventory.
+
+Create reports for:
+
+- Contrast consumption
+- Contrast cost
+- Usage per CT
+- Usage per doctor
+- Usage per branch
+- Batch consumption
+- Expired contrast
+- Wastage
+- Current balance
+
+---
+
+PHASE 8 — PROCUREMENT INTEGRITY
+
+Implement:
+
+Purchase Request
+↓
+Approval
+↓
+RFQ
+↓
+Supplier Comparison
+↓
+Purchase Order
+↓
+Approval
+↓
+Goods Receipt
+↓
+Quality/Quantity Check
+↓
+Inventory
+↓
+Supplier Invoice
+↓
+Accounts Payable
+↓
+Payment
+
+Prevent receiving quantities greater than authorized quantities unless explicitly approved.
+
+Maintain complete supplier price history.
+
+---
+
+PHASE 9 — CLINICAL SAFETY
+
+Strengthen clinical workflows.
+
+Implement:
+
+- Patient identity verification
+- Duplicate patient detection
+- Allergies
+- Critical results
+- Abnormal flags
+- Reference ranges
+- Result verification
+- Result approval
+- Final result locking
+- Amendment history
+- Amendment reason
+- Doctor approval
+- Radiologist approval
+- Laboratory approval
+
+Never allow finalized clinical results to be silently changed.
+
+---
+
+PHASE 10 — LABORATORY
+
+Ensure the complete workflow:
+
+Patient
+↓
+Order
+↓
+Sample Collection
+↓
+Sample ID
+↓
+Processing
+↓
+Result Entry
+↓
+Verification
+↓
+Approval
+↓
+Final Result
+↓
+Print / Portal / Send
+
+Support:
+
+- Age-specific reference ranges
+- Gender-specific reference ranges
+- Critical values
+- Abnormal flags
+- Units
+- Precision
+- Comments
+- Sample rejection
+- Repeat testing
+- Result history
+
+---
+
+PHASE 11 — RADIOLOGY / RIS / PACS
+
+Ensure:
+
+Order
+↓
+Schedule
+↓
+Modality
+↓
+Examination
+↓
+DICOM
+↓
+PACS
+↓
+Radiologist Worklist
+↓
+Report
+↓
+Verification
+↓
+Final Report
+
+Support:
+
+- CT
+- MRI
+- X-Ray
+- Ultrasound
+
+Reports must support:
+
+- Clinical indication
+- Technique
+- Findings
+- Impression
+- Recommendation
+- Radiologist
+- Approval
+- Amendment history
+
+---
+
+PHASE 12 — SMART BILLING
+
+Make billing simple and automated.
+
+Use:
+
+Patient
+↓
+Service
+↓
+Invoice
+↓
+Discount / Insurance
+↓
+Payment
+↓
+Receipt
+↓
+Service
+↓
+Result
+
+Support automatic billing for all configurable services:
+
+- Consultation
+- Laboratory
+- Radiology
+- CT
+- MRI
+- X-Ray
+- Ultrasound
+- Pharmacy
+- Procedures
+- Emergency
+- Admission
+- Surgery
+- Dialysis
+- Ambulance
+
+---
+
+PHASE 13 — INSURANCE
+
+Strengthen insurance workflows.
+
+Support:
+
+- Insurance companies
+- Policies
+- Coverage
+- Eligibility
+- Preauthorization
+- Claims
+- Claim status
+- Approved amount
+- Rejected amount
+- Patient responsibility
+- Insurance responsibility
+- Claim reconciliation
+
+Workflow:
+
+Patient
+↓
+Eligibility
+↓
+Service
+↓
+Authorization
+↓
+Treatment
+↓
+Claim
+↓
+Submission
+↓
+Approval / Rejection
+↓
+Reconciliation
+
+---
+
+PHASE 14 — ROLE-BASED UX
+
+Make the system powerful but extremely easy to use.
+
+Reception
+
+Only show:
+
+- Register Patient
+- Appointment
+- Queue
+- Services
+- Invoice
+- Payment
+- Print
+
+Cashier
+
+- Pending invoices
+- Payments
+- Receipts
+- Refunds
+- Daily closing
+
+Doctor
+
+- Queue
+- Patients
+- Consultation
+- Diagnosis
+- Orders
+- Results
+- History
+
+Laboratory
+
+- Orders
+- Samples
+- Processing
+- Results
+- Verification
+- Approval
+
+Radiology
+
+- Worklist
+- Imaging
+- PACS
+- Reports
+- Approval
+
+Storekeeper
+
+- Stock
+- Receive
+- Issue
+- Transfer
+- Expiry
+- Stock count
+- Reorder
+
+Accountant
+
+- Transactions
+- General Ledger
+- Trial Balance
+- Reconciliation
+- Financial Statements
+
+Do not expose irrelevant modules to each role.
+
+---
+
+PHASE 15 — GUIDED WORKFLOWS
+
+Convert complicated operations into guided steps.
+
+Example:
+
+Diagnostic Patient Workflow
+
+STEP 1
+Register Patient
+
+STEP 2
+Select Service
+
+STEP 3
+Create Invoice
+
+STEP 4
+Payment / Insurance
+
+STEP 5
+Create Order
+
+STEP 6
+Perform Service
+
+STEP 7
+Enter Result
+
+STEP 8
+Verify / Approve
+
+STEP 9
+Print / Send Result
+
+Use clear status indicators.
+
+Users should always know:
+
+Where am I?
+
+What is completed?
+
+What is next?
+
+---
+
+PHASE 16 — DASHBOARD & ANALYTICS
+
+Create management dashboards for:
+
+Operations
+
+- Patients/day
+- Services/day
+- Revenue/day
+- Revenue/month
+- Department performance
+- Doctor performance
+- Turnaround time
+
+Finance
+
+- Revenue
+- Expenses
+- Profit
+- AR
+- AP
+- Cash
+- Bank
+- Budget variance
+
+Inventory
+
+- Stock value
+- Low stock
+- Expiring stock
+- Expired stock
+- Consumption
+- Wastage
+- Purchase trends
+
+Management
+
+Allow:
+
+Dashboard → Report → Transaction → Source Record
+
+---
+
+PHASE 17 — REPORTING
+
+All major reports must support:
+
+- Date range
+- Branch
+- Department
+- User
+- Service
+- Status
+- Search
+- Pagination
+- Print
+- PDF
+- Excel
+
+Create standardized financial, clinical, operational and inventory reports.
+
+---
+
+PHASE 18 — API
+
+Standardize APIs under:
+
+/api/v1/
+
+Use:
+
+- JWT authentication
+- RBAC
+- Validation
+- Rate limiting
+- Pagination
+- Error standards
+- Audit logging
+
+Generate and maintain OpenAPI documentation.
+
+Prepare integration support for:
+
+- Mobile app
+- Patient portal
+- Doctor portal
+- External hospitals
+- SMS
+- Email
+- Payment systems
+- PACS
+- DICOM
+- FHIR
+- Webhooks
+
+---
+
+PHASE 19 — PERFORMANCE
+
+Optimize:
+
+- Database queries
+- N+1 queries
+- Large reports
+- Search
+- Dashboards
+- APIs
+- Pagination
+
+Add indexes where required.
+
+Use background jobs for:
+
+- Large exports
+- PDF generation
+- Notifications
+- Scheduled reports
+- Backups
+
+---
+
+PHASE 20 — DATABASE & MIGRATION CLEANUP
+
+Use Alembic as the single authoritative migration system.
+
+Remove scattered manual migration logic where possible.
+
+Every schema change must have a migration.
+
+Test:
+
+Clean database
+↓
+Install
+↓
+Migration
+↓
+Seed
+↓
+Application
+
+Also test:
+
+Previous version
+↓
+Upgrade migration
+↓
+New version
+
+No data loss.
+
+---
+
+PHASE 21 — TESTING
+
+Create a reproducible test environment.
+
+The command should work:
+
+docker compose -f docker-compose.test.yml up
+
+Then:
+
+Install dependencies
+↓
+Create test database
+↓
+Run migrations
+↓
+Seed test data
+↓
+Run tests
+↓
+Generate report
+
+Test:
+
+Security
+
+Authentication, authorization, CSRF, rate limits, sessions.
+
+Accounting
+
+Debit/credit, invoice, payment, refund, reversal.
+
+Inventory
+
+Purchase, GRN, transfer, batch, expiry, FEFO, consumption.
+
+Clinical
+
+Patient, lab, radiology, critical results, report locking.
+
+API
+
+Authentication, permissions, validation, errors.
+
+Target:
+
+>90% coverage for critical business logic.
+
+---
+
+PHASE 22 — DATA INTEGRITY
+
+Use database transactions for all multi-step operations.
+
+Example:
+
+Invoice
++
+Payment
++
+Accounting Entry
+
+must either all succeed or all rollback.
+
+Likewise:
+
+Stock Consumption
++
+Inventory Movement
++
+Accounting Entry
+
+must remain consistent.
+
+Never allow partial transactions.
+
+---
+
+PHASE 23 — BACKUP & DISASTER RECOVERY
+
+Implement:
+
+- Automated backups
+- Encrypted backups
+- Backup retention
+- Backup verification
+- Restore testing
+- Disaster recovery documentation
+
+Provide:
+
+Backup
+↓
+Verify
+↓
+Restore
+↓
+Validate
+
+---
+
+PHASE 24 — DOCUMENTATION
+
+Update documentation so it exactly matches the actual codebase.
+
+Do not claim:
+
+- 30 models if there are 115
+- 9 tests if there are 256
+- Features that are not implemented
+
+Generate accurate:
+
+- Architecture documentation
+- Database documentation
+- API documentation
+- Deployment guide
+- Security guide
+- Backup guide
+- Administrator manual
+- User manual
+- Developer guide
+
+---
+
+PHASE 25 — CODE QUALITY
+
+Perform a complete code audit.
+
+Find and fix:
+
+- Duplicate routes
+- Duplicate models
+- Duplicate business logic
+- Dead code
+- Unused imports
+- Inconsistent naming
+- Hardcoded values
+- Security vulnerabilities
+- Circular dependencies
+- Unnecessary database queries
+
+Move business logic into reusable service layers.
+
+Routes should remain thin.
+
+---
+
+PHASE 26 — PRODUCTION READINESS
+
+Before declaring production-ready, verify:
+
+Security
+
+- No default credentials
+- No hardcoded secrets
+- HTTPS enforced
+- Secure cookies
+- RBAC verified
+- Audit enabled
+
+Database
+
+- Clean installation works
+- Upgrade works
+- Migrations work
+- Rollback strategy exists
+
+Finance
+
+- Debit = Credit
+- Posted transactions protected
+- Period closing works
+
+Inventory
+
+- Stock movements traceable
+- Batch tracking works
+- Expiry tracking works
+- FEFO works
+
+Clinical
+
+- Final results protected
+- Amendments audited
+- Critical results handled
+
+Testing
+
+- Critical tests pass
+- Security tests pass
+- Integration tests pass
+
+Deployment
+
+- Docker works
+- Production configuration works
+- Backup works
+- Restore works
+- Health checks work
+
+---
+
+FINAL ACCEPTANCE CRITERIA
+
+Do not declare the project complete simply because the application starts.
+
+The system is complete only when:
+
+Security + Accounting + Inventory + Clinical Safety + Permissions + Testing + UX + Performance + Backup + Deployment
+
+are all validated.
+
+Final target:
+
+MDC 10/10 ENTERPRISE HEALTHCARE PLATFORM
+
+The final product should be:
+
+Healthcare ERP
++
+HIS
++
+LIS
++
+RIS/PACS
++
+Pharmacy
++
+Inventory
++
+Procurement
++
+Accounting
++
+HR
++
+Insurance
++
+Analytics
++
+API/Integration Platform
+
+But the system must remain:
+
+Simple for users
+Powerful for management
+Safe for clinical operations
+Accurate for finance
+Traceable for inventory
+Secure for patient data
+Scalable for multiple branches
+
+FINAL RULE
+
+Do not add unnecessary features.
+
+Prioritize:
+
+Reliability → Security → Data Integrity → Clinical Safety → Accounting Accuracy → Inventory Accuracy → UX → Performance → New Features
+
+After implementation, generate a final gap report showing:
+
+1. What already existed
+2. What was missing
+3. What was fixed
+4. What was improved
+5. Tests passed
+6. Security checks passed
+7. Remaining risks
+8. Production readiness score
+9. Recommended next phase

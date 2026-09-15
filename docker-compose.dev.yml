@@ -1,0 +1,54 @@
+# ---------------------------------------------------------------------------
+# DEVELOPMENT stack: ERP (dev server, live reload) + PostgreSQL — one command.
+#
+#   docker compose -f docker-compose.dev.yml up --build
+#   Open http://localhost:5000     login: admin / password set during initialization
+#
+# - The source folder is mounted into the container, so edits on your machine
+#   reload automatically (Flask debug reloader).
+# - Demo data is loaded on first run (--demo).
+# - PostgreSQL is also published on localhost:5432, so you can alternatively run
+#   the app on the host (python run.py) against this same database.
+#
+# Stop:            docker compose -f docker-compose.dev.yml down
+# Reset the DB:    docker compose -f docker-compose.dev.yml down -v
+# ---------------------------------------------------------------------------
+services:
+  erp-dev:
+    build: .
+    command: python run.py --demo --online --debug
+    ports:
+      - "5000:5000"
+    environment:
+      - SECRET_KEY=${SECRET_KEY:-dev-only-not-secret}
+      - DATABASE_URL=postgresql://mdc:${DB_PASSWORD:-mdc_dev}@db:5432/mdc_erp
+      - FLASK_CONFIG=development
+      - PORT=5000
+      - COOKIE_SECURE=0
+      - PYTHONUNBUFFERED=1
+    volumes:
+      - .:/app                       # live code editing
+    depends_on:
+      db:
+        condition: service_healthy
+    restart: unless-stopped
+
+  db:
+    image: postgres:16-alpine
+    environment:
+      - POSTGRES_USER=mdc
+      - POSTGRES_PASSWORD=${DB_PASSWORD:-mdc_dev}
+      - POSTGRES_DB=mdc_erp
+    ports:
+      - "5432:5432"                  # host access for the "app on host" workflow
+    volumes:
+      - pg-dev-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U mdc -d mdc_erp"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+    restart: unless-stopped
+
+volumes:
+  pg-dev-data:

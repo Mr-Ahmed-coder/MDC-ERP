@@ -1,0 +1,1358 @@
+MDC DIAGNOSTIC ERP — FINAL 9.2 → 10.0 ENTERPRISE HARDENING
+
+OBJECTIVE
+
+Upgrade the existing uploaded MDC Diagnostic ERP Final 9.1→10 from approximately 9.2/10 to a genuinely production-ready 10/10 enterprise healthcare ERP/HIS.
+
+The current system already contains extensive healthcare, ERP, accounting, inventory, laboratory, radiology/PACS, pharmacy, HR, insurance, API, security, reporting and workflow functionality.
+
+CRITICAL RULE
+
+DO NOT rebuild the application.
+
+DO NOT remove existing functionality.
+
+DO NOT duplicate existing modules.
+
+DO NOT replace working architecture unnecessarily.
+
+First inspect the existing codebase and identify what already exists.
+
+Then fix, strengthen, integrate and complete the existing implementation.
+
+The goal is:
+
+«STABILITY + SECURITY + DATA INTEGRITY + CLINICAL SAFETY + SIMPLE UX + PRODUCTION READINESS»
+
+Not feature quantity.
+
+---
+
+PRIORITY ORDER
+
+Implement in this exact order:
+
+1. Database migration architecture
+2. RBAC/security consistency
+3. Automated PostgreSQL testing
+4. Accounting integrity
+5. Inventory integrity + FEFO
+6. CT contrast inventory control
+7. Clinical result safety
+8. HTTPS/production security
+9. API security
+10. Performance
+11. UX simplification
+12. Documentation
+13. Final production certification
+
+---
+
+1. DATABASE MIGRATION — ALEMBIC ONLY
+
+Make Alembic/Flask-Migrate the single authoritative database migration system.
+
+Remove production dependency on:
+
+db.create_all()
+
+and scattered:
+
+ALTER TABLE ...
+
+from:
+
+- bootstrap.py
+- upgrade scripts
+- startup code
+- production initialization
+
+Existing manual migration logic must be converted into proper versioned Alembic migrations.
+
+Required architecture:
+
+Migration 001
+Migration 002
+Migration 003
+...
+Current Migration
+
+Every schema change must be represented by a migration.
+
+Support:
+
+Fresh Installation
+Existing Installation
+Upgrade
+Rollback where safe
+
+Acceptance test
+
+From an empty PostgreSQL database:
+
+Create DB
+↓
+Run migrations
+↓
+Seed system
+↓
+Create administrator
+↓
+Start application
+↓
+System works
+
+No manual SQL commands.
+
+---
+
+2. RBAC — COMPLETE CENTRALIZATION
+
+Create one authoritative permission registry.
+
+Every:
+
+- Route
+- API
+- Workflow
+- Button
+- Report
+- Export
+- Admin action
+- Clinical action
+- Financial action
+
+must use centralized permissions.
+
+Remove role/permission inconsistencies.
+
+Audit all references to roles such as:
+
+super_admin
+branch_manager
+accountant
+reception
+cashier
+doctor
+radiologist
+lab_tech
+hr
+storekeeper
+engineer
+it_admin
+auditor
+
+If roles such as:
+
+nurse
+lab_supervisor
+
+are used anywhere, either properly define them or replace them with the correct existing role.
+
+Do not leave orphan permissions.
+
+---
+
+3. LEAST PRIVILEGE
+
+Every role should only see and execute what is necessary.
+
+Examples:
+
+Reception
+
+Can:
+
+- Register patient
+- Appointment
+- Queue
+- Service
+- Invoice
+- Payment initiation where authorized
+
+Cannot:
+
+- Modify accounting journals
+- Approve laboratory results
+- Approve radiology reports
+- Change system permissions
+
+Laboratory
+
+Can:
+
+- View assigned lab orders
+- Collect/process samples
+- Enter results
+- Verify results
+
+Cannot:
+
+- Modify accounting
+- Modify patient financial records
+
+Radiologist
+
+Can:
+
+- View assigned imaging
+- Create reports
+- Approve reports
+
+Cannot:
+
+- Modify accounting
+
+Accountant
+
+Can:
+
+- Accounting
+- Invoices
+- Payments
+- Financial reports
+
+Cannot:
+
+- Modify clinical results
+
+Enforce all of this server-side.
+
+---
+
+4. MULTI-BRANCH SECURITY
+
+Audit every major model and route for:
+
+Organization
+Branch
+Department
+User
+
+Ensure users cannot access another branch's records unless explicitly authorized.
+
+Create automated tests:
+
+Branch A user
+→ Branch A data = ALLOWED
+
+Branch A user
+→ Branch B data = DENIED
+
+Test this through:
+
+- UI
+- Routes
+- APIs
+- Reports
+- Exports
+- Search
+- Direct record URLs
+
+---
+
+5. ACCOUNTING INTEGRITY
+
+Perform a complete accounting audit.
+
+Every posted journal must satisfy:
+
+TOTAL DEBIT = TOTAL CREDIT
+
+Test all financial flows.
+
+Invoice
+
+Dr Accounts Receivable / Cash
+Cr Revenue
+
+Payment
+
+Dr Cash / Bank
+Cr Accounts Receivable
+
+Refund
+
+Correctly reverse the original financial effect.
+
+Purchase
+
+Dr Inventory / Expense
+Cr Accounts Payable / Cash
+
+Inventory consumption
+
+Dr COGS / Expense
+Cr Inventory
+
+Fixed asset
+
+Dr Fixed Asset
+Cr Cash / Payable
+
+Depreciation
+
+Dr Depreciation Expense
+Cr Accumulated Depreciation
+
+Test:
+
+- Invoice
+- Payment
+- Refund
+- Credit note
+- Debit note
+- Purchase
+- Expense
+- Inventory
+- COGS
+- Fixed assets
+- Depreciation
+- Bank transactions
+- Insurance
+- Commission
+
+No unbalanced journal may ever be posted.
+
+---
+
+6. POSTED TRANSACTION PROTECTION
+
+After posting:
+
+DO NOT allow direct editing.
+
+Use:
+
+Posted
+↓
+Reverse
+↓
+Correct
+↓
+New transaction
+
+Implement:
+
+- Posting
+- Reversal
+- Approval
+- Fiscal period locking
+- Year-end closing
+- Controlled reopening
+- Audit trail
+
+Every reversal must reference the original transaction.
+
+---
+
+7. INVENTORY INTEGRITY
+
+Every inventory movement must record:
+
+Item
+Warehouse
+Location
+Quantity
+Unit
+Batch
+Expiry
+User
+Date
+Source Document
+Reason
+
+Support:
+
+Purchase
+→ GRN
+→ Stock
+→ Issue
+→ Consumption
+→ Return
+→ Transfer
+→ Adjustment
+
+Prevent unauthorized negative stock.
+
+---
+
+8. BATCH + EXPIRY + FEFO
+
+Implement and test real:
+
+FEFO — First Expiry, First Out
+
+For:
+
+- Medicines
+- Reagents
+- Contrast
+- Consumables
+
+Algorithm:
+
+Available batches
+↓
+Remove expired batches
+↓
+Sort by earliest expiry
+↓
+Select earliest valid batch
+↓
+Issue quantity
+↓
+Record batch
+↓
+Update stock
+
+Do not silently consume expired inventory.
+
+---
+
+9. CT CONTRAST MANAGEMENT
+
+Create a complete CT contrast workflow integrated with inventory.
+
+CT Order
+↓
+Contrast Required?
+↓
+YES
+↓
+Select Contrast Product
+↓
+Select Batch
+↓
+Enter Quantity
+↓
+Perform CT
+↓
+Automatically Deduct Stock
+↓
+Record Patient
+↓
+Record Batch
+↓
+Record Expiry
+↓
+Record Operator
+↓
+Record Cost
+↓
+Audit
+
+If:
+
+Contrast Required = NO
+
+then:
+
+NO contrast inventory deduction.
+
+Support:
+
+- Contrast product
+- Batch
+- Expiry
+- Quantity
+- Cost
+- Wastage
+- Patient
+- CT study
+- Operator
+
+Reports:
+
+- Daily contrast usage
+- Monthly usage
+- Usage per CT
+- Cost per CT
+- Batch usage
+- Expired contrast
+- Wastage
+- Current stock
+
+---
+
+10. CLINICAL RESULT SAFETY
+
+Implement strict lifecycle:
+
+Draft
+↓
+Entered
+↓
+Verified
+↓
+Approved
+↓
+Final
+↓
+Locked
+
+Once locked:
+
+NO direct editing.
+
+Correction must use:
+
+Amendment
+↓
+Reason
+↓
+Previous result preserved
+↓
+New result
+↓
+Approver
+↓
+Timestamp
+↓
+Audit
+
+Apply to:
+
+- Laboratory
+- Radiology
+- Other diagnostic reports
+
+Never overwrite the historical clinical result.
+
+---
+
+11. CRITICAL LAB RESULTS
+
+Implement:
+
+Critical result
+↓
+Alert
+↓
+Responsible clinician
+↓
+Acknowledgement
+↓
+Timestamp
+↓
+Action/comment
+↓
+Audit
+
+Track:
+
+- Who was notified
+- Who acknowledged
+- When
+- Method
+- Result
+- Action
+
+---
+
+12. LABORATORY WORKFLOW
+
+Validate:
+
+Order
+↓
+Sample Collection
+↓
+Sample ID
+↓
+Processing
+↓
+Result
+↓
+Verification
+↓
+Approval
+↓
+Final
+↓
+Print / Portal
+
+Support:
+
+- Reference ranges
+- Age
+- Gender
+- Units
+- Abnormal flags
+- Critical values
+- Comments
+- Sample rejection
+- Rejection reason
+- Repeat testing
+- Result history
+
+---
+
+13. RADIOLOGY WORKFLOW
+
+Validate:
+
+Order
+↓
+Schedule
+↓
+Modality
+↓
+Study
+↓
+DICOM/PACS
+↓
+Radiologist Worklist
+↓
+Report
+↓
+Verification
+↓
+Approval
+↓
+Final
+
+Ensure radiology reports support:
+
+- Indication
+- Technique
+- Findings
+- Impression
+- Recommendation
+- Radiologist
+- Approval
+- Amendment history
+
+---
+
+14. BILLING INTEGRITY
+
+All billable services should follow:
+
+Patient
+↓
+Service
+↓
+Invoice
+↓
+Discount / Insurance
+↓
+Payment
+↓
+Receipt
+↓
+Service
+↓
+Result
+
+Prevent:
+
+- Duplicate invoices
+- Duplicate payments
+- Unauthorized discounts
+- Unauthorized refunds
+- Negative payment amounts
+- Payment greater than outstanding balance unless explicitly allowed
+- Duplicate service billing
+
+---
+
+15. INSURANCE
+
+Validate:
+
+Eligibility
+↓
+Authorization
+↓
+Service
+↓
+Claim
+↓
+Submission
+↓
+Approval / Rejection
+↓
+Reconciliation
+
+Track:
+
+- Insurance amount
+- Patient amount
+- Approved amount
+- Rejected amount
+- Outstanding amount
+- Claim status
+
+---
+
+16. HTTPS + PRODUCTION SECURITY
+
+Production must use:
+
+Internet
+↓
+HTTPS :443
+↓
+Nginx
+↓
+Gunicorn
+↓
+Flask
+↓
+PostgreSQL
+
+HTTP:
+
+:80
+↓
+301 Redirect
+↓
+HTTPS
+
+Enable:
+
+- Secure cookies
+- HttpOnly
+- SameSite
+- HSTS
+- CSP
+- X-Content-Type-Options
+- X-Frame-Options
+- Referrer-Policy
+
+Production must never use:
+
+COOKIE_SECURE=0
+
+---
+
+17. SECRET MANAGEMENT
+
+Remove all insecure fallback secrets.
+
+Production must fail if these are missing:
+
+SECRET_KEY
+JWT_SECRET_KEY
+DB_PASSWORD
+ENCRYPTION_KEY
+
+Never use:
+
+change-this
+mdc_secret
+admin123
+
+Never commit real secrets to Git.
+
+---
+
+18. API SECURITY
+
+Standardize APIs under:
+
+/api/v1/
+
+Every endpoint must implement:
+
+- Authentication
+- Authorization
+- Validation
+- Rate limiting
+- Error handling
+- Audit logging
+
+Test:
+
+- Invalid token
+- Expired token
+- Missing permission
+- Wrong branch
+- Wrong organization
+- Unauthorized patient
+- Unauthorized invoice
+- Unauthorized report
+- Injection
+- Malformed request
+
+---
+
+19. REPRODUCIBLE TEST ENVIRONMENT
+
+Create:
+
+docker-compose.test.yml
+
+The test environment must automatically:
+
+Install dependencies
+↓
+Start PostgreSQL
+↓
+Create test DB
+↓
+Run migrations
+↓
+Seed test data
+↓
+Run pytest
+↓
+Run coverage
+↓
+Generate report
+
+One command must execute the complete suite.
+
+Example:
+
+docker compose -f docker-compose.test.yml up --build --abort-on-container-exit
+
+No manual environment preparation.
+
+---
+
+20. TEST CRITICAL BUSINESS LOGIC
+
+Create tests for:
+
+Security
+
+- Authentication
+- RBAC
+- Branch isolation
+- CSRF
+- Rate limiting
+- Session security
+
+Accounting
+
+- Invoice
+- Payment
+- Refund
+- Journal
+- Reversal
+- Period closing
+- Debit = Credit
+
+Inventory
+
+- Purchase
+- GRN
+- Issue
+- Transfer
+- Batch
+- Expiry
+- FEFO
+- Consumption
+- Return
+
+Clinical
+
+- Patient
+- Lab
+- Radiology
+- Result
+- Verification
+- Approval
+- Locking
+- Amendment
+- Critical value
+
+API
+
+- Authentication
+- Authorization
+- Validation
+- Branch isolation
+- Error handling
+
+Target:
+
+>90% coverage of critical business logic.
+
+---
+
+21. END-TO-END TESTS
+
+Implement complete workflows.
+
+Patient → Payment → Lab
+
+Patient
+↓
+Registration
+↓
+Service
+↓
+Invoice
+↓
+Payment
+↓
+Lab Order
+↓
+Sample
+↓
+Result
+↓
+Verification
+↓
+Approval
+↓
+Final Report
+
+Patient → CT → Contrast
+
+Patient
+↓
+CT Order
+↓
+Invoice
+↓
+Payment
+↓
+Contrast Required
+↓
+Contrast Batch
+↓
+CT
+↓
+Automatic Stock Deduction
+↓
+Radiology Report
+↓
+Approval
+
+Procurement → Inventory → Accounting
+
+Purchase Order
+↓
+GRN
+↓
+Inventory
+↓
+Stock Value
+↓
+Accounting
+↓
+Payable
+
+Verify that all systems remain synchronized.
+
+---
+
+22. PERFORMANCE
+
+Audit:
+
+- Slow queries
+- N+1 queries
+- Missing indexes
+- Large reports
+- Search
+- Dashboard
+- API
+- Patient history
+- Financial reports
+
+Implement:
+
+- Pagination
+- Proper indexes
+- Query optimization
+- Background processing
+- Caching where appropriate
+
+Do not sacrifice correctness for performance.
+
+---
+
+23. UX — MAKE IT SIMPLE
+
+The system may have hundreds of backend functions, but the user experience must remain simple.
+
+Create role-based dashboards.
+
+Reception
+
+Patient
+Appointments
+Queue
+Services
+Invoice
+Payment
+
+Doctor
+
+Queue
+Patients
+Consultation
+Orders
+Results
+History
+
+Laboratory
+
+Orders
+Samples
+Results
+Verification
+Approval
+
+Radiology
+
+Worklist
+Imaging
+Reports
+Approval
+
+Cashier
+
+Invoices
+Payments
+Receipts
+Refunds
+Daily Closing
+
+Storekeeper
+
+Stock
+Receive
+Issue
+Transfer
+Expiry
+Stock Count
+
+Accountant
+
+Accounting
+GL
+Trial Balance
+Bank
+Financial Reports
+
+Hide unnecessary modules from each role.
+
+---
+
+24. GUIDED WORKFLOW
+
+Every major workflow should clearly display:
+
+Current Step
+Completed Steps
+Required Action
+Next Step
+Status
+
+Example:
+
+Patient
+↓
+Service
+↓
+Invoice
+↓
+Payment
+↓
+Order
+↓
+Examination
+↓
+Result
+↓
+Approval
+↓
+Print / Send
+
+The user should always understand:
+
+“What am I doing now?”
+
+and:
+
+“What should I do next?”
+
+---
+
+25. DOCUMENTATION
+
+Update all documentation to match the actual application.
+
+Do not leave outdated information such as:
+
+Version 7.9
+30 models
+9 tests
+
+if those statements are no longer correct.
+
+Update:
+
+- README
+- Architecture
+- Database
+- API
+- Security
+- Deployment
+- Backup
+- Administrator Guide
+- User Manual
+- Developer Guide
+
+Documentation must reflect the actual code.
+
+---
+
+26. CODE QUALITY
+
+Perform a full code audit.
+
+Find and fix:
+
+- Duplicate routes
+- Duplicate models
+- Duplicate logic
+- Dead code
+- Unused imports
+- Hardcoded values
+- Circular dependencies
+- Inconsistent naming
+- Unsafe SQL
+- Missing validation
+- Missing authorization
+
+Keep:
+
+Routes = thin
+Services = business logic
+Models = data
+Security = centralized
+Workflows = explicit
+
+---
+
+27. BACKUP & DISASTER RECOVERY
+
+Implement:
+
+- Automated daily backups
+- Backup retention
+- Encryption
+- Backup verification
+- Restore testing
+
+Test:
+
+Backup
+↓
+Destroy test DB
+↓
+Restore
+↓
+Run migrations if needed
+↓
+Validate data
+↓
+Application works
+
+Never claim backup protection without performing a restore test.
+
+---
+
+28. FINAL SECURITY AUDIT
+
+Before release, scan the entire project for:
+
+password
+secret
+token
+api_key
+SECRET_KEY
+mdc_secret
+admin123
+change-this
+debug=True
+COOKIE_SECURE=0
+
+Remove insecure production values.
+
+Check:
+
+- SQL injection
+- XSS
+- CSRF
+- Authentication bypass
+- Authorization bypass
+- IDOR
+- File upload vulnerabilities
+- Path traversal
+- Sensitive information leakage
+- Insecure API endpoints
+
+---
+
+29. FINAL ACCEPTANCE TEST
+
+Run all critical workflows:
+
+1. Clean installation
+2. Migration
+3. Login
+4. Patient registration
+5. Appointment
+6. Queue
+7. Consultation
+8. Lab order
+9. Sample collection
+10. Lab result
+11. Lab approval
+12. Radiology order
+13. PACS workflow
+14. Radiology report
+15. CT contrast
+16. Invoice
+17. Payment
+18. Refund
+19. Accounting
+20. Procurement
+21. GRN
+22. Inventory
+23. FEFO
+24. Insurance
+25. HR
+26. Branch isolation
+27. RBAC
+28. Audit
+29. API
+30. Backup
+31. Restore
+32. Performance
+
+Every critical workflow must pass.
+
+---
+
+30. FINAL 10/10 CERTIFICATION
+
+Do not claim the system is 10/10 simply because it has many features.
+
+MDC can be certified 10/10 Production Ready only if:
+
+SECURITY
+
+- No default production secrets
+- HTTPS works
+- Secure cookies work
+- RBAC is consistent
+- Branch isolation works
+- Audit works
+
+DATABASE
+
+- Alembic is authoritative
+- Fresh installation works
+- Upgrade works
+- No data loss
+
+ACCOUNTING
+
+- Debit = Credit
+- Posted transactions protected
+- Reversal works
+- Fiscal periods work
+
+INVENTORY
+
+- Stock movements accurate
+- Batch tracking works
+- Expiry works
+- FEFO works
+- CT contrast deduction works
+
+CLINICAL
+
+- Results verified
+- Results approved
+- Final results locked
+- Amendments preserve history
+- Critical results tracked
+
+TESTING
+
+- PostgreSQL test environment works
+- Critical tests pass
+- Security tests pass
+- Accounting tests pass
+- Inventory tests pass
+- Clinical tests pass
+
+DEPLOYMENT
+
+- Docker production works
+- HTTPS works
+- Backup works
+- Restore works
+- Health checks work
+
+UX
+
+Users can complete daily tasks without unnecessary navigation.
+
+---
+
+FINAL RULE
+
+Do not add major new modules until all existing modules are:
+
+SECURE
+
+STABLE
+
+INTEGRATED
+
+TESTED
+
+AUDITABLE
+
+EASY TO USE
+
+PRODUCTION READY
+
+The final product should be:
+
+MDC HEALTHCARE ERP
+
+HIS + LIS + RIS/PACS + Pharmacy + Inventory + Procurement + Accounting + HR + Insurance + Analytics + API
+
+with:
+
+«Enterprise power + healthcare specialization + simple user experience.»
+
+---
+
+FINAL DEVELOPMENT REPORT
+
+After implementation, provide a report containing:
+
+1. Changes implemented
+2. Bugs fixed
+3. Security issues fixed
+4. Migration changes
+5. RBAC changes
+6. Accounting validation
+7. Inventory validation
+8. CT contrast validation
+9. Clinical safety validation
+10. API security validation
+11. Tests executed
+12. Tests passed
+13. Tests failed
+14. Coverage %
+15. Performance results
+16. Backup/restore result
+17. Remaining technical debt
+18. Remaining risks
+19. Production readiness status
+
+Never report “10/10” unless the tests and acceptance criteria actually pass.

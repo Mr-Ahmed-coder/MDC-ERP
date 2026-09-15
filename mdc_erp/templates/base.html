@@ -1,0 +1,28 @@
+<!DOCTYPE html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>{{ title }} · MDC ERP</title>
+<link rel="icon" href="/static/brand/mdc-mark.png">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+<style>{{ css|safe }}{{ print_css|safe }}{{ nav_css|safe }}</style>{{ brand_style|safe }}</head><body class="{{ dark }}">
+{{ print_letterhead|safe }}
+<div class="app">
+<aside class="sidebar" id="sb">
+ <div class="brand"><div class="logo">{{ logo_mark|safe }} {{ appname }}</div><div class="sub">{{ company }}</div></div>
+ <nav class="nav">{{ nav_html|safe }}</nav>
+</aside>
+<div class="scrim" id="scrim" onclick="document.getElementById('sb').classList.remove('open');this.classList.remove('show')"></div>
+<div class="main">{{ watermark|safe }}
+ <header class="top">
+   <button class="menu-btn" onclick="var s=document.getElementById('sb');s.classList.toggle('open');document.getElementById('scrim').classList.toggle('show')">☰</button>
+   <button class="apps-btn" aria-label="Open applications" onclick="openLauncher()" title="All applications (Ctrl+Shift+K)"><span aria-hidden="true">⊞</span><span class="apps-label">Apps</span></button>
+   <h1>{{ title }}</h1><div class="sp"></div>
+   <div style="margin-right:6px"><input readonly aria-label="Global search" onclick="GS&&GS.open()" onfocus="GS&&GS.open()" placeholder="Search…  Ctrl+K" style="border:1px solid var(--line);border-radius:9px;padding:8px 12px;width:210px;font-size:13px;background:var(--canvas);cursor:pointer" title="Global search (Ctrl+K / Cmd+K)"></div>
+   {{ quick_create|safe }}
+   {% if dev_mode %}<span style="background:var(--amber);color:var(--petrol7);font-weight:700;font-size:10px;padding:3px 7px;border-radius:6px;margin-right:8px;letter-spacing:.5px">DEV</span>{% endif %}
+   {{ bell|safe }}
+   {{ fav_menu|safe }}
+   {{ recent_menu|safe }}
+   <a class="btn sm" href="{{ toggle_dark_url }}" title="Dark mode">◐</a>
+   <div class="chip"><div class="av">{{ initial }}</div><div><b style="font-size:13px">{{ uname }}</b><br><small>{{ role_label }}</small></div><a class="btn gh sm" href="{{ logout_url }}" title="Logout">↪</a></div>
+ </header>
+ <div class="content">{{ flashes|safe }}{{ subnav|safe }}{{ crumbbar|safe }}{{ body|safe }}{{ brand_footer|safe }}</div>
+</div></div>{{ app_launcher|safe }}{{ pvw|safe }}{{ kbd|safe }}{{ global_search|safe }}{{ doc_actions|safe }}{{ search_select|safe }}</body></html>

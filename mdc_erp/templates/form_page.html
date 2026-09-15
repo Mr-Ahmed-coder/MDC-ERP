@@ -1,0 +1,13 @@
+<form method="post" action="{{ action }}"{% if enctype %} enctype="{{ enctype }}"{% endif %} class="o-form">
+  <div class="o-formbar">
+    <div class="o-formbar-actions">
+      <button class="btn primary" type="submit">Save</button>
+      <a class="btn" href="{{ back }}">Discard</a>
+    </div>
+    <div class="o-formbar-crumb">{{ title }}</div>
+  </div>
+  <div class="o-sheet">
+    <h1 class="o-sheet-title">{{ title }}</h1>
+    <div class="fg">{{ fields_html|safe }}</div>
+  </div>
+</form>

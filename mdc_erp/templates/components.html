@@ -1,0 +1,13 @@
+{# Reusable UI building blocks for the Jinja migration (Phase 3+).
+   Cells and headers are pre-rendered, pre-escaped HTML fragments produced in
+   Python (via h()), so they are emitted with |safe.
+   `aligns` is an optional per-column class list (e.g. ['','','num']) applied to
+   both header and body cells — used to right-align numeric columns. #}
+{% macro data_table(headers, rows, empty='No records.', aligns=None) -%}
+<div class="tw"><table>
+<thead><tr>{% for hc in headers %}<th{% if aligns and aligns[loop.index0] %} class="{{ aligns[loop.index0] }}"{% endif %}>{{ hc|safe }}</th>{% endfor %}</tr></thead>
+<tbody>
+{%- for row in rows %}<tr>{% for cell in row %}<td{% if aligns and aligns[loop.index0] %} class="{{ aligns[loop.index0] }}"{% endif %}>{{ cell|safe }}</td>{% endfor %}</tr>{% endfor %}
+{%- if not rows %}<tr><td colspan="{{ headers|length }}" style="color:var(--muted);padding:16px">{{ empty|safe }}</td></tr>{% endif %}
+</tbody></table></div>
+{%- endmacro %}

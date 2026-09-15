@@ -1,0 +1,9 @@
+{% import 'components.html' as c %}
+{% if prefix %}{{ prefix|safe }}{% endif %}
+<div class="panel">
+  <div class="ph"><h2>{{ title }}</h2>{% if subtitle %}<span class="so">{{ subtitle|safe }}</span>{% endif %}<div class="sp"></div>{{ toolbar|safe }}</div>
+  {% if note %}<div class="pad" style="font-size:13px;color:var(--muted)">{{ note|safe }}</div>{% endif %}
+  {% if filterbar %}{{ filterbar|safe }}{% endif %}
+  {{ c.data_table(headers, rows, empty, aligns) }}
+  {% if footer %}{{ footer|safe }}{% endif %}
+</div>

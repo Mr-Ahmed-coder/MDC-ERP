@@ -1,0 +1,10 @@
+erp.db
+__pycache__/
+*.pyc
+venv/
+.env
+.venv/
+data/
+*.db-wal
+*.db-shm
+.pytest_cache/

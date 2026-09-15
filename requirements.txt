@@ -1,0 +1,19 @@
+Flask==3.1.3
+Flask-SQLAlchemy==3.1.1
+Flask-Migrate==4.0.7
+waitress==3.0.2            # Windows production server
+qrcode==8.0                # verification QR codes on printed documents
+python-barcode==0.15.1     # Code-128 barcodes (MRN, invoice no.)
+openpyxl==3.1.5            # Excel exports (TB, GL, AR/AP, budgets)
+reportlab==4.2.5           # PDF financial statements pack
+python-dotenv==1.0.1       # loads a local .env in development (optional convenience)
+
+# --- Optional add-ons live in requirements-optional.txt ---
+#   PACS DICOM import (pydicom, numpy, Pillow). The ERP starts and runs fully
+#   without them; only DICOM ingest needs them. Install with:
+#       pip install -r requirements-optional.txt
+
+# NOTE: PostgreSQL and the Linux production server are NOT needed for a standard
+# Windows / SQLite install. For a PostgreSQL / Gunicorn deployment install the
+# production extras as well:   pip install -r requirements.txt -r requirements-prod.txt
+pdfkit==1.0.0

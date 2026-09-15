@@ -1,0 +1,5 @@
+# MDC ERP database migrations
+
+Production schema changes must be applied with `flask db upgrade` after the application environment is configured. The v8.2 hardening migration adds the payment idempotency column, billable-source indexes, and uniqueness constraints that protect against duplicate financial events.
+
+The migration deliberately fails if pre-existing duplicate source links are found. Resolve those records through an audited data-cleanup procedure before retrying the upgrade.

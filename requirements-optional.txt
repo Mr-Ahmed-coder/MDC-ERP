@@ -1,0 +1,14 @@
+# Optional add-ons — the ERP starts and runs fully WITHOUT these.
+# Install only if you want PACS to import/render DICOM files:
+#     pip install -r requirements-optional.txt
+#
+# PACS / DICOM (Phase 1, v8.0)
+pydicom==3.0.2             # DICOM Part-10 parsing (Study/Series/Instance metadata)
+numpy==2.1.3              # pixel array handling for frame rendering
+Pillow==11.0.0            # render DICOM frames to PNG for the web viewer
+
+# Optional codecs for COMPRESSED transfer syntaxes (JPEG/JPEG2000/RLE).
+# Without them, compressed studies are still catalogued; frames show a placeholder.
+# pylibjpeg==2.0.1
+# pylibjpeg-libjpeg==2.1.0
+# pylibjpeg-openjpeg==2.4.0

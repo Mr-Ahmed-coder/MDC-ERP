@@ -1,0 +1,1103 @@
+MDC Diagnostic ERP — Final Enterprise Upgrade & Production Hardening
+
+You are upgrading the existing MDC Diagnostic ERP into a highly secure, scalable, flexible, user-friendly Healthcare ERP/HIS platform.
+
+IMPORTANT RULE
+
+Do NOT rebuild the system from scratch.
+
+Do NOT remove or break existing working modules.
+
+First inspect the existing codebase, database models, routes, APIs, permissions, workflows, migrations, tests, UI and integrations.
+
+Then improve the existing architecture incrementally.
+
+Preserve all existing functionality unless a change is required for security, data integrity, usability, performance, or architectural consistency.
+
+---
+
+1. SECURITY HARDENING — CRITICAL
+
+Make the entire system production-grade.
+
+Authentication
+
+Implement:
+
+- Strong password policy
+- Secure password hashing
+- Account lockout/rate limiting
+- Brute-force protection
+- Login attempt tracking
+- Session rotation after login
+- Secure logout
+- Session timeout
+- Password expiration policy configurable by administrator
+- Mandatory password change for first login
+- Mandatory password change after administrator reset
+- Optional/mandatory 2FA for sensitive roles
+
+Remove all default credentials
+
+Never ship production with:
+
+- admin123
+- default passwords
+- development credentials
+- hardcoded secrets
+- hardcoded database passwords
+
+Generate secure credentials during first installation.
+
+All secrets must come from environment variables or a secure secret-management mechanism.
+
+If required production secrets are missing, production startup must fail safely.
+
+---
+
+2. HTTPS AND WEB SECURITY
+
+Production configuration must enforce:
+
+- HTTPS
+- Secure cookies
+- HttpOnly cookies
+- SameSite protection
+- CSRF protection
+- HSTS
+- Content Security Policy
+- X-Frame-Options
+- X-Content-Type-Options
+- Referrer Policy
+- secure CORS configuration
+
+Never allow insecure production defaults.
+
+Create a clear:
+
+Development → Staging → Production
+
+configuration separation.
+
+---
+
+3. ROLE-BASED ACCESS CONTROL
+
+Create one centralized Role & Permission Registry.
+
+Every role used anywhere in:
+
+- routes
+- decorators
+- permissions
+- templates
+- APIs
+- reports
+
+must exist in the centralized registry.
+
+Support granular permissions:
+
+View
+Create
+Edit
+Delete
+Approve
+Print
+Export
+Refund
+Cancel
+Post
+Reverse
+Configure
+
+Permissions must be module-specific.
+
+Example:
+
+LAB_VIEW
+LAB_CREATE_ORDER
+LAB_ENTER_RESULT
+LAB_VERIFY_RESULT
+LAB_APPROVE_RESULT
+LAB_PRINT_RESULT
+LAB_EXPORT_RESULT
+
+Apply the same structure to:
+
+- Patients
+- Reception
+- Consultation
+- Laboratory
+- Radiology
+- Pharmacy
+- Inventory
+- Procurement
+- Billing
+- Accounting
+- HR
+- Reports
+- Administration
+
+Use least-privilege access.
+
+---
+
+4. AUDIT TRAIL
+
+Create a complete immutable audit system.
+
+Record:
+
+- User
+- Role
+- Date/time
+- IP address
+- Device/session
+- Module
+- Action
+- Record ID
+- Old value
+- New value
+- Reason when required
+
+Audit:
+
+- Patient changes
+- Clinical results
+- Invoice changes
+- Payments
+- Refunds
+- Discounts
+- Accounting journals
+- Inventory adjustments
+- Stock transfers
+- Purchase orders
+- GRNs
+- User permissions
+- Configuration
+- Report modifications
+
+Sensitive clinical and financial records must never be silently deleted.
+
+Use:
+
+Active
+Cancelled
+Voided
+Reversed
+Archived
+
+instead of destructive deletion where appropriate.
+
+---
+
+5. DATABASE AND MIGRATIONS
+
+Standardize database schema management.
+
+Use Alembic migrations as the single migration mechanism.
+
+Do not depend on scattered manual ALTER TABLE logic.
+
+Create:
+
+Initial schema
+→
+Versioned migrations
+→
+Upgrade
+→
+Rollback
+
+Every database change must have a migration.
+
+Add:
+
+- Foreign-key integrity
+- Unique constraints
+- Check constraints
+- Proper indexes
+- Transaction management
+- Soft deletion where appropriate
+- Created_at
+- Updated_at
+- Created_by
+- Updated_by
+
+Prevent duplicate patient records.
+
+---
+
+6. ACCOUNTING INTEGRITY — CRITICAL
+
+Accounting must operate as a true double-entry accounting system.
+
+Every financial transaction must satisfy:
+
+TOTAL DEBIT = TOTAL CREDIT
+
+Automatically generate accounting entries for:
+
+- Invoices
+- Payments
+- Refunds
+- Credit notes
+- Debit notes
+- Discounts
+- Inventory purchases
+- Inventory consumption
+- Inventory adjustments
+- COGS
+- Expenses
+- Assets
+- Depreciation
+- Supplier payments
+- Customer receipts
+- Bank transactions
+
+Never allow users to manually create inconsistent accounting entries unless they have appropriate permissions.
+
+Implement:
+
+- Journal approval
+- Journal posting
+- Journal reversal
+- Period locking
+- Fiscal year closing
+- Reopening with authorization
+- Accounting audit trail
+
+Create automatic accounting-integrity tests.
+
+---
+
+7. INVENTORY — ADVANCED
+
+Upgrade inventory to:
+
+Multi-Warehouse + Batch + Expiry + FEFO + Serial Tracking
+
+Support:
+
+- Item master
+- Categories
+- Units of measure
+- Suppliers
+- Warehouses
+- Locations
+- Batches
+- Expiry dates
+- Serial numbers
+- Minimum stock
+- Maximum stock
+- Reorder point
+- Safety stock
+- Stock valuation
+- Stock adjustment
+- Stock transfer
+- Stock consumption
+- Stock return
+- Expired stock
+- Damaged stock
+- Wastage
+- Stock count
+
+Implement:
+
+FEFO
+
+First Expiry, First Out.
+
+For medicines, reagents and contrast media:
+
+Item
+→ Batch
+→ Expiry
+→ Warehouse
+→ Quantity
+→ Unit Cost
+→ Supplier
+
+When consumed, automatically select the appropriate batch.
+
+---
+
+8. CT CONTRAST INVENTORY CONTROL
+
+Create a dedicated workflow for CT contrast.
+
+When a CT examination requires contrast:
+
+CT Order
+→ Contrast Required
+→ Select Contrast Product
+→ Select Batch
+→ Record Quantity
+→ Perform Scan
+→ Automatically Deduct Inventory
+→ Record Batch
+→ Record Expiry
+→ Record Operator
+→ Record Patient
+→ Record CT Examination
+
+If contrast is not required:
+
+Do not deduct contrast inventory.
+
+Support configurable contrast protocols and quantities.
+
+Create reports:
+
+- Contrast used per day
+- Contrast used per CT scan
+- Contrast usage by product
+- Batch consumption
+- Expired contrast
+- Wastage
+- Cost per contrast-enhanced CT
+- Remaining stock
+
+---
+
+9. CLINICAL SAFETY
+
+Strengthen healthcare workflows.
+
+Implement:
+
+- Patient identity verification
+- Duplicate patient detection
+- Allergies
+- Critical results
+- Abnormal result flags
+- Result verification
+- Result approval
+- Result amendment history
+- Locked final reports
+- Amendment reason
+- Doctor approval
+- Radiologist approval
+- Laboratory supervisor approval
+
+Critical laboratory results should generate configurable alerts.
+
+Never allow finalized clinical results to be silently edited.
+
+---
+
+10. LABORATORY WORKFLOW
+
+Ensure:
+
+Patient
+→ Order
+→ Sample Collection
+→ Sample ID
+→ Processing
+→ Result Entry
+→ Verification
+→ Approval
+→ Final Result
+→ Print / Portal / Send
+
+Support:
+
+- Reference ranges
+- Gender-specific ranges
+- Age-specific ranges
+- Critical values
+- Abnormal flags
+- Units
+- Decimal precision
+- Result comments
+- Result history
+- Repeat tests
+- Cancelled samples
+- Rejected samples
+- Sample rejection reasons
+
+---
+
+11. RADIOLOGY / RIS / PACS
+
+Strengthen:
+
+Order
+→ Scheduling
+→ Modality
+→ Examination
+→ DICOM
+→ PACS
+→ Radiologist Worklist
+→ Reporting
+→ Verification
+→ Final Report
+
+Support:
+
+- CT
+- MRI
+- X-Ray
+- Ultrasound
+- Other modalities
+
+Radiology reports must have:
+
+- Findings
+- Impression
+- Recommendations
+- Radiologist
+- Date/time
+- Approval status
+- Amendment history
+
+Never overwrite finalized reports.
+
+---
+
+12. BILLING WORKFLOW
+
+Make billing extremely simple.
+
+Use:
+
+Step 1 — Patient
+
+Step 2 — Services
+
+Step 3 — Invoice
+
+Step 4 — Discount / Insurance
+
+Step 5 — Payment
+
+Step 6 — Receipt
+
+Step 7 — Service Delivery
+
+Step 8 — Result / Completion
+
+Avoid forcing users to navigate unnecessarily between modules.
+
+---
+
+13. SMART SERVICE BILLING
+
+Make all billable services configurable.
+
+Do NOT limit automatic billing to Laboratory and Radiology.
+
+Support:
+
+- Consultation
+- Laboratory
+- Radiology
+- CT
+- MRI
+- X-Ray
+- Ultrasound
+- Procedures
+- Pharmacy
+- Admission
+- Surgery
+- Dialysis
+- Emergency
+- Ambulance
+- Other configurable services
+
+When a billable service is completed, automatically create or update the financial transaction according to configured rules.
+
+---
+
+14. PROCUREMENT
+
+Implement:
+
+Purchase Request
+→ Approval
+→ RFQ
+→ Supplier Selection
+→ Purchase Order
+→ Approval
+→ Goods Receipt
+→ Quality/Quantity Check
+→ Inventory
+→ Supplier Invoice
+→ Accounts Payable
+→ Payment
+
+Support:
+
+- Multiple suppliers
+- Supplier comparison
+- Purchase history
+- Price history
+- Approval levels
+- Partial receiving
+- Backorders
+- Returns
+- Supplier performance
+
+---
+
+15. USER EXPERIENCE
+
+The system must be easier than a traditional ERP.
+
+Use role-based dashboards.
+
+Reception
+
+Show only:
+
+- Register Patient
+- Appointment
+- Queue
+- Services
+- Invoice
+- Payment
+- Print
+
+Cashier
+
+Show:
+
+- Pending invoices
+- Payments
+- Receipts
+- Refunds
+- Daily closing
+
+Doctor
+
+Show:
+
+- Patients
+- Queue
+- Consultation
+- Diagnosis
+- Orders
+- Results
+- History
+
+Laboratory
+
+Show:
+
+- Pending orders
+- Sample collection
+- Processing
+- Results
+- Verification
+- Approval
+
+Radiology
+
+Show:
+
+- Worklist
+- Imaging
+- PACS
+- Reports
+- Approval
+
+Storekeeper
+
+Show:
+
+- Stock
+- Receive
+- Issue
+- Transfer
+- Stock count
+- Expiry
+- Reorder
+
+Accountant
+
+Show:
+
+- Dashboard
+- Invoices
+- Payments
+- Expenses
+- General Ledger
+- Trial Balance
+- Financial Statements
+- Bank Reconciliation
+
+Users must not see irrelevant modules.
+
+---
+
+16. DASHBOARDS
+
+Create role-specific dashboards.
+
+Management dashboard:
+
+- Revenue
+- Expenses
+- Profit
+- Patient volume
+- Service volume
+- Outstanding receivables
+- Payables
+- Inventory value
+- Low stock
+- Expiring items
+- Department performance
+- Daily/monthly/yearly trends
+
+Use drill-down:
+
+Dashboard → Report → Transaction → Source Record.
+
+---
+
+17. REPORTING
+
+Create standardized reports with:
+
+- Date filters
+- Branch filters
+- Department filters
+- User filters
+- Service filters
+- Export Excel
+- Export PDF
+- Print
+- Scheduled reports where appropriate
+
+Financial reports:
+
+- Income Statement
+- Balance Sheet
+- Cash Flow
+- Trial Balance
+- General Ledger
+- AR Aging
+- AP Aging
+- Revenue by service
+- Expense by category
+- Profitability
+
+Healthcare reports:
+
+- Patient volume
+- Service volume
+- Lab statistics
+- Radiology statistics
+- Doctor performance
+- Turnaround time
+- Critical results
+- Inventory usage
+
+---
+
+18. API AND INTEGRATION
+
+Keep the API clean and versioned.
+
+Use:
+
+/api/v1/
+
+Document everything using OpenAPI/Swagger.
+
+Support future integrations:
+
+- Mobile application
+- Patient portal
+- Doctor portal
+- External hospitals
+- Laboratory systems
+- PACS/DICOM
+- Payment systems
+- SMS
+- Email
+- Webhooks
+
+Use authentication, authorization, validation, rate limiting and audit logging for APIs.
+
+---
+
+19. FHIR READINESS
+
+Prepare the architecture for healthcare interoperability.
+
+Where practical, map important resources toward:
+
+- Patient
+- Practitioner
+- Organization
+- Encounter
+- Observation
+- DiagnosticReport
+- ServiceRequest
+- Medication
+- Invoice
+- Appointment
+
+Do not force full FHIR implementation if unnecessary, but make the architecture integration-ready.
+
+---
+
+20. PERFORMANCE
+
+Optimize:
+
+- Database queries
+- N+1 queries
+- Large reports
+- Pagination
+- Search
+- Dashboard loading
+- API response time
+
+Add indexes for frequently queried fields.
+
+Use background jobs for heavy operations such as:
+
+- Large report generation
+- PDF generation
+- Bulk notifications
+- Data exports
+- Scheduled backups
+
+---
+
+21. BACKUP AND DISASTER RECOVERY
+
+Implement automated backups.
+
+Support:
+
+- Daily backup
+- Weekly backup
+- Retention policy
+- Encrypted backups
+- Backup verification
+- Restore testing
+
+Create:
+
+Backup
+→ Verify
+→ Restore Test
+→ Report
+
+Document disaster recovery procedures.
+
+---
+
+22. TESTING
+
+Create a reproducible testing environment.
+
+The following must work:
+
+docker compose test
+→ install dependencies
+→ create test database
+→ run migrations
+→ seed test data
+→ run tests
+→ generate report
+
+Create tests for:
+
+Security
+
+- Authentication
+- Authorization
+- CSRF
+- Rate limiting
+- Session security
+
+Clinical
+
+- Patient
+- Lab
+- Radiology
+- Critical results
+
+Finance
+
+- Invoice
+- Payment
+- Refund
+- Journal
+- Double-entry integrity
+
+Inventory
+
+- Purchase
+- GRN
+- Transfer
+- Consumption
+- Batch
+- Expiry
+- FEFO
+
+Integration
+
+- API
+- DICOM/PACS
+- Notifications
+
+Target:
+
+High-risk business logic = >90% test coverage
+
+---
+
+23. DATA INTEGRITY
+
+Never silently lose data.
+
+Use transactions for workflows such as:
+
+Invoice
++
+Payment
++
+Accounting Entry
+
+and:
+
+Stock Consumption
++
+Inventory Movement
++
+Accounting Entry
+
+If one operation fails, rollback the entire transaction.
+
+---
+
+24. ERROR HANDLING
+
+Create consistent error handling.
+
+Users should see:
+
+«Something went wrong. Please try again or contact the administrator.»
+
+Developers/admins should have detailed logs.
+
+Never expose:
+
+- Database passwords
+- Stack traces
+- Secrets
+- Internal paths
+- Sensitive patient information
+
+to normal users.
+
+---
+
+25. PRODUCTION DEPLOYMENT
+
+Create a clean production deployment:
+
+Internet
+   ↓
+Reverse Proxy
+   ↓
+HTTPS
+   ↓
+Gunicorn
+   ↓
+Flask Application
+   ↓
+PostgreSQL
+
+Use Docker.
+
+Separate:
+
+Development
+Staging
+Production
+Testing
+
+Provide:
+
+- ".env.example"
+- production configuration documentation
+- migration instructions
+- backup instructions
+- restore instructions
+- health check
+- readiness check
+- logging
+- monitoring
+
+---
+
+26. CODE QUALITY
+
+Remove:
+
+- duplicate routes
+- duplicate models
+- dead code
+- unused imports
+- hardcoded secrets
+- inconsistent naming
+- duplicated business logic
+
+Create reusable services for:
+
+- Billing
+- Accounting
+- Inventory
+- Notifications
+- Audit
+- Permissions
+
+Business logic should not be duplicated across routes.
+
+---
+
+27. ADMIN CONFIGURATION
+
+Make the system highly configurable without changing code.
+
+Admin should configure:
+
+- Services
+- Prices
+- Departments
+- Branches
+- Doctors
+- Lab tests
+- Reference ranges
+- Radiology services
+- Payment methods
+- Taxes
+- Discounts
+- Insurance
+- Warehouses
+- Reorder levels
+- Roles
+- Permissions
+- Approval workflows
+- Number sequences
+- Receipt templates
+- Report templates
+
+---
+
+28. MULTI-BRANCH ARCHITECTURE
+
+Prepare the system for multiple branches.
+
+Every relevant transaction should support:
+
+Organization
+→ Branch
+→ Department
+→ User
+
+Users should only see data they are authorized to access.
+
+Management can have cross-branch reporting.
+
+---
+
+29. FINAL QUALITY GATE
+
+Before declaring the system complete, automatically verify:
+
+Security
+
+No default credentials.
+
+No hardcoded production secrets.
+
+HTTPS production-ready.
+
+Database
+
+All migrations work from a clean database.
+
+All migrations work from the previous version.
+
+Accounting
+
+Every financial transaction balances.
+
+Inventory
+
+Every stock movement has a traceable source.
+
+Clinical
+
+Final results cannot be silently changed.
+
+Permissions
+
+No unauthorized user can access restricted data.
+
+Testing
+
+All critical tests pass.
+
+Deployment
+
+Fresh installation works.
+
+Upgrade works.
+
+Backup works.
+
+Restore works.
+
+UX
+
+Each major role can complete its daily workflow with minimal navigation.
+
+---
+
+FINAL OBJECTIVE
+
+The final MDC platform should become:
+
+MDC = Healthcare ERP + HIS + LIS + RIS/PACS + Pharmacy + Inventory + Procurement + Accounting + HR + Reporting + Integration Platform
+
+The system must be:
+
+Secure
+Flexible
+Scalable
+Auditable
+Clinically safe
+Financially accurate
+Inventory accurate
+Easy to use
+API-ready
+Production-ready
+
+Most importantly:
+
+«Do not add complexity just to add features. Make the existing system simpler, safer, more automated and more reliable.»
+
+After implementation, produce a final technical report containing:
+
+1. Features completed
+2. Security improvements
+3. Database changes
+4. Accounting improvements
+5. Inventory improvements
+6. Clinical safety improvements
+7. UX improvements
+8. API/integration improvements
+9. Tests completed
+10. Remaining issues
+11. Production readiness score
+12. Recommended next phase

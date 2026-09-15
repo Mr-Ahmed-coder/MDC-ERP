@@ -1,0 +1,34 @@
+MODERN DIAGNOSTIC CENTER - ERP  (Windows)
+==========================================
+
+SIDA LOO FURO / HOW TO OPEN
+---------------------------
+1) Marka ugu horreysa: Python ka rakib https://www.python.org/downloads/
+   MUHIIM: calaamadee "Add Python to PATH" markaad rakibayso.
+
+2) DOUBLE-CLICK:  START-MDC-ERP.bat
+   - Marka ugu horreysa wuxuu qaadan doonaa daqiiqado (diyaargarow).
+   - Kadib wuxuu si toos ah u furayaa browser-ka.
+
+3) Login:  admin  /  password set during initialization   (isla markiiba beddel)
+
+JOOJIN / STOP
+-------------
+Xir daaqadda madow (black window) ama taabo CTRL+C.
+
+DESKTOP SHORTCUT (ikhtiyaari)
+-----------------------------
+Double-click:  Create-Desktop-Shortcut.bat
+-> Wuxuu sameeyaa "MDC ERP" icon Desktop-ka; kadib halkaas ka fur.
+
+TALEEFANKA / OTHER COMPUTERS (isku Wi-Fi)
+-----------------------------------------
+1) Kombiyuutarka server-ka, taabo Windows+R, qor: cmd , Enter, qor: ipconfig
+   -> hel "IPv4 Address" (tusaale 192.168.1.20)
+2) Taleefanka/kombiyuutar kale, browser-ka ku qor:
+   http://192.168.1.20:5000
+   (Firewall-ku hal mar wuu ku weydiin karaa "Allow" - guji Allow.)
+
+CAAWIMAAD / HELP
+----------------
+Eeg galka  docs\  (Installation, User Manual, Admin Manual).

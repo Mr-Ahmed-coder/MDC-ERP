@@ -1,0 +1,15 @@
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["."]
+addopts = "-ra"
+
+[tool.ruff]
+line-length = 120
+extend-exclude = ["backups", "instance"]
+
+[tool.ruff.lint]
+select = ["E9", "F401", "F811"]
+ignore = ["E402", "E501"]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/*" = ["F401", "F811"]

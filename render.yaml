@@ -1,0 +1,16 @@
+services:
+  - type: web
+    name: mdc-diagnostic-erp
+    runtime: python
+    plan: starter            # paid plan keeps a persistent disk (SQLite safe)
+    buildCommand: pip install -r requirements-prod.txt
+    startCommand: gunicorn wsgi:app
+    envVars:
+      - key: SECRET_KEY
+        generateValue: true
+      - key: DATA_DIR
+        value: /data
+    disk:
+      name: erp-data
+      mountPath: /data       # erp.db lives here so it survives redeploys
+      sizeGB: 1

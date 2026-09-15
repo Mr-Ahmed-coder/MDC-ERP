@@ -1,0 +1,7 @@
+# Production extras (Linux/Docker only) — NOT needed on Windows/SQLite:
+#   pip install -r requirements.txt -r requirements-prod.txt
+-r requirements.txt
+gunicorn==23.0.0           # Linux WSGI server
+psycopg2-binary==2.9.10    # PostgreSQL driver
+pdfkit==1.0.0
+playwright==1.47.0

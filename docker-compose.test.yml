@@ -1,0 +1,36 @@
+# Reproducible PostgreSQL test stack.
+# Run: docker compose -f docker-compose.test.yml up --build --abort-on-container-exit
+# The database password below is test-only and must never be reused in production.
+services:
+  test-runner:
+    build: .
+    environment:
+      FLASK_CONFIG: development
+      SECRET_KEY: test-only-secret-not-for-production
+      DATABASE_URL: postgresql://mdc_test:test_only_password@db:5432/mdc_test
+      DATA_DIR: /tmp/mdc-test-data
+      PYTHONUNBUFFERED: "1"
+    depends_on:
+      db:
+        condition: service_healthy
+    command: >-
+      sh -ec "pip install --no-cache-dir -r requirements-dev.txt
+      && flask --app 'mdc_erp:create_app()' db upgrade
+      && flask --app wsgi init-db
+      && coverage run --source=mdc_erp -m pytest -q --junitxml=/tmp/test-results.xml
+      && coverage report
+      && coverage xml -o /tmp/coverage.xml"
+
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: mdc_test
+      POSTGRES_PASSWORD: test_only_password
+      POSTGRES_DB: mdc_test
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U mdc_test -d mdc_test"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+    tmpfs:
+      - /var/lib/postgresql/data

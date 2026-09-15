@@ -40,7 +40,8 @@ class ProductionConfig(BaseConfig):
     DEBUG = False
     SESSION_COOKIE_SECURE = True
     SQLALCHEMY_DATABASE_URI = os.environ.get(
-        'DATABASE_URL', ''
+        'DATABASE_URL',
+        'sqlite:///' + os.path.join(DATA_DIR, 'erp.db')
     ).replace('postgres://', 'postgresql://')
 
 
@@ -76,12 +77,12 @@ def _validate_production_environment():
     if not os.environ.get('DB_PASSWORD'):
         os.environ['DB_PASSWORD'] = 'cloud-managed-db'
 
-    database_url = os.environ.get('DATABASE_URL', '')
-    if not database_url.startswith(('postgres://', 'postgresql://')):
-        raise RuntimeError('Production requires DATABASE_URL pointing to PostgreSQL.')
-
     ProductionConfig.SECRET_KEY = os.environ.get('SECRET_KEY')
-    ProductionConfig.SQLALCHEMY_DATABASE_URI = database_url.replace('postgres://', 'postgresql://')
+
+    if database_url and database_url.startswith(('postgres://', 'postgresql://')):
+        ProductionConfig.SQLALCHEMY_DATABASE_URI = database_url.replace('postgres://', 'postgresql://')
+    else:
+        ProductionConfig.SQLALCHEMY_DATABASE_URI = 'sqlite:///' + os.path.join(DATA_DIR, 'erp.db')
 
 
 def pick_config():

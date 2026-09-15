@@ -48,27 +48,15 @@ def create_app(config_object=None):
 
 
 def _auto_init_db_if_needed(app):
-    """Pre-flight cloud check: Auto-initialize tables & seed data if database is empty."""
+    """Pre-flight cloud check: Auto-initialize schema tables & guarantee administrator user exists."""
     if app.config.get('TESTING'):
         return
     with app.app_context():
         try:
-            from sqlalchemy import inspect as _inspect
-            inspector = _inspect(db.engine)
-            if not inspector.has_table('setting') or not inspector.has_table('user'):
-                app.logger.info("Empty database detected. Initializing schema tables & seed data...")
-                try:
-                    from flask_migrate import upgrade as _flask_upgrade
-                    _flask_upgrade()
-                except Exception as ex:
-                    app.logger.warning("Flask-Migrate upgrade exception (%s); executing db.create_all() fallback.", ex)
-                    db.create_all()
-                
-                from .bootstrap import init_db
-                init_db(app)
-                app.logger.info("Cloud pre-flight database auto-initialization complete.")
+            from .bootstrap import init_db
+            init_db(app)
         except Exception as err:
-            app.logger.warning("Pre-flight database check handled: %s", err)
+            app.logger.warning("Pre-flight database initialization check handled: %s", err)
 
 
 def _register_pw_gate(app):

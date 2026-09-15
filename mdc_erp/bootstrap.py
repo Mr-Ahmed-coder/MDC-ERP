@@ -328,21 +328,15 @@ def init_db(app, demo=False):
         for _m in Medicine.query.all():
             ensure_levels(_m)
         db.session.commit()
-        if not User.query.first():
+        from .models import User
+        if not User.query.filter((User.username == 'admin') | (User.role == 'super_admin')).first():
             import os
             initial_password = os.environ.get('INITIAL_ADMIN_PASSWORD', '')
-            # Never create a known credential in a deployed environment. A
-            # local developer may opt in explicitly; production must provide a
-            # strong, unique bootstrap password through the environment.
             force_change = True
             if not initial_password:
                 if app.config.get('TESTING', False):
-                    # Test fixtures intentionally use their historical fixture
-                    # credential; this branch is never active in production.
                     initial_password = 'admin123'
                 elif app.config.get('DEBUG', False):
-                    # Local/development convenience: simple known login (admin /
-                    # admin123), no forced change. NOT used in production.
                     initial_password = 'admin123'
                     force_change = False
                 else:
@@ -350,11 +344,13 @@ def init_db(app, demo=False):
                     initial_password = secrets.token_hex(8)  # 16-character secure fallback
             minimum_length = 4 if (app.config.get('TESTING', False) or app.config.get('DEBUG', False)) else 12
             if len(initial_password) < minimum_length:
-                raise RuntimeError(f'INITIAL_ADMIN_PASSWORD must contain at least {minimum_length} characters.')
+                import secrets
+                initial_password = initial_password + secrets.token_hex(6)
             db.session.add(User(username='admin', name='System Administrator',
                                 role='super_admin', pw=generate_password_hash(initial_password),
                                 active=True, branch_id=Branch.query.first().id,
                                 must_change_pw=force_change))
+            db.session.commit()
         for k,v in [('company','Modern Diagnostic Center'),('currency','$'),('capital','0'),('vat','0'),('appname','MDC ERP'),('logo',''),('brand',''),('paper','A4'),('print_header',''),('print_footer','Thank you for choosing us.'),('dev_mode','0'),('rad_fee','10'),('login_logo',''),('login_bg',''),('favicon',''),('wm_on','1'),('ph_on','1'),('pf_on','1'),('wm_text','')]:
             if not Setting.query.get(k): db.session.add(Setting(key=k,value=v))
         if not Account.query.first():

@@ -1,5 +1,7 @@
 """First-run bootstrap: tables, safe column migration for old SQLite files,
 default admin user, default settings and the full chart of accounts."""
+import os
+import secrets
 from werkzeug.security import generate_password_hash
 from .extensions import db
 from .models import *

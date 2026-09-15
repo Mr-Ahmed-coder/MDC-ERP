@@ -37,7 +37,7 @@ def login():
             err = f'Too many failed attempts. Please wait about {_lock} minutes and try again.'
             u = None
         else:
-            u = User.query.filter_by(username=_uname).first()
+            u = User.query.filter(db.func.lower(User.username) == _uname.lower()).first()
         if not err and u and u.active and check_password_hash(u.pw, request.form.get('password','')):
             if getattr(u, 'totp_enabled', False) and u.totp_secret:
                 session['pre2fa'] = u.id

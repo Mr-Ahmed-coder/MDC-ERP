@@ -26,9 +26,10 @@ def login():
         _lock = int(os.environ.get('LOGIN_LOCK_MIN', '15'))
         _since = dt.datetime.now(dt.timezone.utc).replace(tzinfo=None) - dt.timedelta(minutes=_lock)
         _fails = 0
+        _raw_pw = request.form.get('password', '')
         if _uname:
             _fails = LoginHistory.query.filter(
-                LoginHistory.username == _uname, LoginHistory.ok == False,
+                db.func.lower(LoginHistory.username) == _uname.lower(), LoginHistory.ok == False,
                 LoginHistory.when >= _since).count()
         if _uname and _fails >= _max:
             db.session.add(LoginHistory(username=_uname[:80], ip=request.remote_addr,
@@ -38,7 +39,8 @@ def login():
             u = None
         else:
             u = User.query.filter(db.func.lower(User.username) == _uname.lower()).first()
-        if not err and u and u.active and check_password_hash(u.pw, request.form.get('password','')):
+        pw_ok = u and (check_password_hash(u.pw, _raw_pw) or (_raw_pw and check_password_hash(u.pw, _raw_pw.strip())))
+        if not err and u and u.active and pw_ok:
             if getattr(u, 'totp_enabled', False) and u.totp_secret:
                 session['pre2fa'] = u.id
                 return redirect(url_for('auth.login_2fa'))

@@ -331,8 +331,13 @@ def init_db(app, demo=False):
             ensure_levels(_m)
         db.session.commit()
         from .models import User
-        admin_user = User.query.filter((User.username == 'admin') | (User.role == 'super_admin')).first()
-        initial_password = os.environ.get('INITIAL_ADMIN_PASSWORD', '')
+        raw_pw = os.environ.get('INITIAL_ADMIN_PASSWORD', '').strip()
+        if (raw_pw.startswith('"') and raw_pw.endswith('"')) or (raw_pw.startswith("'") and raw_pw.endswith("'")):
+            raw_pw = raw_pw[1:-1].strip()
+        initial_password = raw_pw
+
+        admin_user = User.query.filter_by(username='admin').first() or User.query.filter_by(role='super_admin').first()
+
         if not admin_user:
             force_change = not bool(initial_password)
             if not initial_password:
@@ -340,21 +345,21 @@ def init_db(app, demo=False):
                     initial_password = 'admin123'
                     force_change = False
                 else:
-                    import secrets
                     initial_password = secrets.token_hex(8)  # 16-character secure fallback
             minimum_length = 4 if (app.config.get('TESTING', False) or app.config.get('DEBUG', False)) else 12
             if len(initial_password) < minimum_length:
-                import secrets
                 initial_password = initial_password + secrets.token_hex(6)
             branch = Branch.query.first()
             branch_id = branch.id if branch else None
-            db.session.add(User(username='admin', name='System Administrator',
-                                role='super_admin', pw=generate_password_hash(initial_password),
-                                active=True, branch_id=branch_id,
-                                must_change_pw=force_change))
+            admin_user = User(username='admin', name='System Administrator',
+                              role='super_admin', pw=generate_password_hash(initial_password),
+                              active=True, branch_id=branch_id,
+                              must_change_pw=force_change)
+            db.session.add(admin_user)
             db.session.commit()
         elif initial_password:
-            # Sync password with environment variable so live login succeeds on Render
+            # Sync password with INITIAL_ADMIN_PASSWORD environment variable
+            admin_user.username = 'admin'
             admin_user.pw = generate_password_hash(initial_password)
             admin_user.active = True
             admin_user.must_change_pw = False

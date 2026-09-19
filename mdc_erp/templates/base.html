@@ -6,14 +6,24 @@
 {{ print_letterhead|safe }}
 <div class="app">
 <aside class="sidebar" id="sb">
- <div class="brand"><div class="logo">{{ logo_mark|safe }} {{ appname }}</div><div class="sub">{{ company }}</div></div>
- <nav class="nav">{{ nav_html|safe }}</nav>
+ <div class="brand">
+  <div class="logo">{{ logo_mark|safe }} <div class="brand-text"><div>{{ appname }}</div><div class="sub">{{ company }}</div></div></div>
+  <button type="button" class="sb-toggle-btn" id="sbToggle" onclick="toggleSidebar()" title="Toggle sidebar" aria-label="Toggle sidebar">
+   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
+  </button>
+ </div>
+ <nav class="nav" id="sbNav">{{ nav_html|safe }}</nav>
 </aside>
-<div class="scrim" id="scrim" onclick="document.getElementById('sb').classList.remove('open');this.classList.remove('show')"></div>
+<div class="scrim" id="scrim" onclick="toggleSidebar()"></div>
 <div class="main">{{ watermark|safe }}
  <header class="top">
-   <button class="menu-btn" onclick="var s=document.getElementById('sb');s.classList.toggle('open');document.getElementById('scrim').classList.toggle('show')">☰</button>
-   <button class="apps-btn" aria-label="Open applications" onclick="openLauncher()" title="All applications (Ctrl+Shift+K)"><span aria-hidden="true">⊞</span><span class="apps-label">Apps</span></button>
+   <button class="menu-btn" onclick="toggleSidebar()" title="Toggle sidebar menu" aria-label="Toggle navigation drawer">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="12" x2="21" y2="12"></line><line x1="3" y1="6" x2="21" y2="6"></line><line x1="3" y1="18" x2="21" y2="18"></line></svg>
+   </button>
+   <button class="apps-btn" aria-label="Open applications" onclick="openLauncher()" title="All applications (Ctrl+Shift+K)">
+    <span aria-hidden="true"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:middle"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg></span>
+    <span class="apps-label">Apps</span>
+   </button>
    <h1>{{ title }}</h1><div class="sp"></div>
    <div style="margin-right:6px"><input readonly aria-label="Global search" onclick="GS&&GS.open()" onfocus="GS&&GS.open()" placeholder="Search…  Ctrl+K" style="border:1px solid var(--line);border-radius:9px;padding:8px 12px;width:210px;font-size:13px;background:var(--canvas);cursor:pointer" title="Global search (Ctrl+K / Cmd+K)"></div>
    {{ quick_create|safe }}
@@ -21,8 +31,36 @@
    {{ bell|safe }}
    {{ fav_menu|safe }}
    {{ recent_menu|safe }}
-   <a class="btn sm" href="{{ toggle_dark_url }}" title="Dark mode">◐</a>
-   <div class="chip"><div class="av">{{ initial }}</div><div><b style="font-size:13px">{{ uname }}</b><br><small>{{ role_label }}</small></div><a class="btn gh sm" href="{{ logout_url }}" title="Logout">↪</a></div>
+   <a class="btn sm" href="{{ toggle_dark_url }}" title="Dark mode"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:middle"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path></svg></a>
+   <div class="chip"><div class="av">{{ initial }}</div><div><b style="font-size:13px">{{ uname }}</b><br><small>{{ role_label }}</small></div><a class="btn gh sm" href="{{ logout_url }}" title="Logout"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:middle"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><polyline points="16 17 21 12 16 7"></polyline><line x1="21" y1="12" x2="9" y2="12"></line></svg></a></div>
  </header>
  <div class="content">{{ flashes|safe }}{{ subnav|safe }}{{ crumbbar|safe }}{{ body|safe }}{{ brand_footer|safe }}</div>
-</div></div>{{ app_launcher|safe }}{{ pvw|safe }}{{ kbd|safe }}{{ global_search|safe }}{{ doc_actions|safe }}{{ search_select|safe }}</body></html>
+</div></div>{{ app_launcher|safe }}{{ pvw|safe }}{{ kbd|safe }}{{ global_search|safe }}{{ doc_actions|safe }}{{ search_select|safe }}
+<script>
+(function(){
+  var sb=document.getElementById('sb');
+  if(localStorage.getItem('mdc_sidebar_collapsed')==='true'&&window.innerWidth>860){
+    sb.classList.add('collapsed');
+  }
+})();
+function toggleSidebar(){
+  var sb=document.getElementById('sb');
+  if(window.innerWidth<=860){
+    sb.classList.toggle('open');
+    var s=document.getElementById('scrim');if(s)s.classList.toggle('show');
+  }else{
+    var c=sb.classList.toggle('collapsed');
+    localStorage.setItem('mdc_sidebar_collapsed',c?'true':'false');
+  }
+}
+document.addEventListener('click',function(e){
+  if(window.innerWidth<=860){
+    var a=e.target.closest('#sbNav a');
+    if(a){
+      var sb=document.getElementById('sb');if(sb)sb.classList.remove('open');
+      var s=document.getElementById('scrim');if(s)s.classList.remove('show');
+    }
+  }
+});
+</script>
+</body></html>

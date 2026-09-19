@@ -20,31 +20,46 @@ input,select,textarea{font-family:inherit;font-size:14px}
 input:focus-visible,select:focus-visible,textarea:focus-visible{outline:none;border-color:var(--petrol);box-shadow:0 0 0 3px var(--ring)}
 .pill{transition:none}
 .app{display:flex;min-height:100vh}
-.sidebar{width:238px;background:var(--petrol);color:#DCE7E9;display:flex;flex-direction:column;position:fixed;inset:0 auto 0 0;z-index:40;transition:transform .25s}
-.brand{padding:16px 18px;border-bottom:1px solid rgba(255,255,255,.08)}
-.brand .logo{font-family:var(--fd);font-weight:700;font-size:16px;color:#fff;display:flex;align-items:center;gap:9px}
-.brand .mark{width:26px;height:26px;border-radius:7px;background:linear-gradient(135deg,var(--amber),#F2C063);display:grid;place-items:center;color:var(--petrol7);font-weight:700;flex:none}
-.brand .sub{font-size:11px;color:#89A6AB;margin-top:3px}
-.nav{padding:6px 12px;flex:1;overflow-y:auto}
-.nav .g{font-size:10px;text-transform:uppercase;letter-spacing:.8px;color:#6E9298;margin:12px 8px 4px}
-.navsec{margin-top:1px}
-.navsec .gbtn{width:100%;display:flex;align-items:center;justify-content:space-between;background:none;border:0;cursor:pointer;font-family:inherit;font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.8px;color:#6E9298;padding:11px 8px 4px}
-.navsec .gbtn:hover{color:#A9C6CB}
-.navsec .chev{font-size:15px;transition:transform .18s;opacity:.7}
+.sidebar{width:260px;background:var(--petrol);color:#DCE7E9;display:flex;flex-direction:column;position:fixed;inset:0 auto 0 0;z-index:40;transition:width .2s ease,transform .25s ease}
+.brand{padding:14px 16px;border-bottom:1px solid rgba(255,255,255,.08);display:flex;align-items:center;justify-content:space-between;gap:8px}
+.brand .logo{font-family:var(--fd);font-weight:700;font-size:15px;color:#fff;display:flex;align-items:center;gap:9px;min-width:0}
+.brand .mark{width:28px;height:28px;border-radius:7px;background:linear-gradient(135deg,var(--amber),#F2C063);display:grid;place-items:center;color:var(--petrol7);font-weight:700;flex:none}
+.brand .sub{font-size:11px;color:#89A6AB;margin-top:2px}
+.brand-text{display:flex;flex-direction:column;min-width:0}
+.sb-toggle-btn{background:none;border:none;color:#89A6AB;cursor:pointer;padding:5px;border-radius:6px;display:flex;align-items:center;justify-content:center;transition:color .15s,background .15s;flex:none}
+.sb-toggle-btn:hover{color:#fff;background:rgba(255,255,255,.1)}
+.sb-toggle-btn svg{transition:transform .2s ease}
+.nav{padding:8px 10px;flex:1;overflow-y:auto;overflow-x:hidden}
+.nav .g{font-size:10px;text-transform:uppercase;letter-spacing:.8px;color:#8fb0cc;margin:12px 8px 4px;font-weight:700;white-space:nowrap}
+.navsec{margin-top:2px}
+.navsec .gbtn{width:100%;display:flex;align-items:center;justify-content:space-between;background:none;border:0;cursor:pointer;font-family:inherit;font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.8px;color:#8fb0cc;padding:10px 8px 4px}
+.navsec .gbtn:hover{color:#e6eff7}
+.navsec .chev{width:14px;height:14px;transition:transform .18s;opacity:.8;flex:none}
 .navsec.open .chev{transform:rotate(90deg)}
 .navsub{display:none;flex-direction:column;gap:1px}
 .navsec.open .navsub{display:flex}
-.nav a{display:flex;align-items:center;gap:10px;padding:8px 12px;border-radius:9px;color:#C6D7DA;font-size:13.5px;font-weight:500;transition:background .15s,color .15s;position:relative}
-.nav a:hover{background:rgba(255,255,255,.07);color:#fff}
-.nav a.active{background:rgba(228,84,36,.16);color:#fff;font-weight:600;box-shadow:inset 3px 0 0 var(--amber)}
+.nav a{display:flex;align-items:center;gap:10px;padding:8px 12px;border-radius:8px;color:#cdddea;font-size:13.5px;font-weight:500;transition:background .15s,color .15s;position:relative;white-space:nowrap;text-decoration:none}
+.nav a:hover{background:rgba(255,255,255,.08);color:#fff}
+.nav a.active{background:rgba(228,84,36,.18);color:#fff;font-weight:600;box-shadow:inset 3px 0 0 var(--amber)}
 .nav a.active .ic{color:var(--amber)}
-.nav a .ic{width:17px;height:17px;flex:none}
-.main{flex:1;margin-left:238px;display:flex;flex-direction:column;min-width:0}
+.nav a .ic{width:18px;height:18px;flex:none;color:#9db6cc}
+.main{flex:1;margin-left:260px;display:flex;flex-direction:column;min-width:0;transition:margin-left .2s ease}
+.sidebar.collapsed{width:68px}
+.sidebar.collapsed ~ .main{margin-left:68px}
+.sidebar.collapsed .brand{padding:14px 10px;justify-content:center}
+.sidebar.collapsed .brand-text,.sidebar.collapsed .brand .sub{display:none}
+.sidebar.collapsed .sb-toggle-btn svg{transform:rotate(180deg)}
+.sidebar.collapsed .nav{padding:6px 4px}
+.sidebar.collapsed .nav .g,.sidebar.collapsed .navsec .gbtn{display:none}
+.sidebar.collapsed .navsec .navsub{display:flex!important}
+.sidebar.collapsed .nav a{justify-content:center;padding:9px 0;width:44px;margin:2px auto}
+.sidebar.collapsed .nav a .nav-text{display:none}
+.sidebar.collapsed .nav a:hover::after{content:attr(data-tooltip);position:absolute;left:calc(100% + 10px);top:50%;transform:translateY(-50%);background:#111E2B;color:#fff;padding:5px 10px;border-radius:6px;font-size:12px;font-weight:500;white-space:nowrap;z-index:100;box-shadow:0 4px 12px rgba(0,0,0,.25);pointer-events:none}
 .top{height:58px;background:var(--surface);border-bottom:1px solid var(--line);display:flex;align-items:center;gap:14px;padding:0 20px;position:sticky;top:0;z-index:30}
 .top h1{font-family:var(--fd);font-size:18px;font-weight:600}
 .top .sp{flex:1}
-.menu-btn{display:none;background:none;border:none;font-size:22px;color:var(--petrol)}
-.apps-btn{display:inline-flex;align-items:center;gap:5px;border:1px solid var(--line);background:var(--surface);color:var(--petrol);border-radius:8px;padding:6px 9px;font-size:13px;font-weight:700}.apps-btn:hover{background:var(--canvas);border-color:var(--petrol)}.apps-label{font-size:12px}
+.menu-btn{display:none;background:none;border:none;font-size:22px;color:var(--petrol);cursor:pointer;padding:4px}
+.apps-btn{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--line);background:var(--surface);color:var(--petrol);border-radius:8px;padding:6px 10px;font-size:13px;font-weight:700;cursor:pointer}.apps-btn:hover{background:var(--canvas);border-color:var(--petrol)}.apps-label{font-size:12px}
 .chip{display:flex;align-items:center;gap:9px;border-left:1px solid var(--line);padding-left:12px}
 .av{width:32px;height:32px;border-radius:50%;background:var(--petrol);color:#fff;display:grid;place-items:center;font-weight:600;font-size:13px}
 .chip small{color:var(--muted);text-transform:capitalize;font-size:11px}
@@ -503,51 +518,51 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--petrol);
 """
 
 NAVDEF = [
- ("Overview", [("dashboard","Dashboard","M3 13h8V3H3zM13 21h8V3h-8zM3 21h8v-6H3z"),
-    ("apps","All Modules","M3 3h7v7H3zM14 3h7v7h-7zM14 14h7v7h-7zM3 14h7v7H3z"),
-    ("chat","Chat","M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z")]),
- ("Clinical · Caafimaad", [
-    ("patients","Patients","M12 8a4 4 0 100-8 4 4 0 000 8zM4 21c0-4 4-6 8-6s8 2 8 6"),
-    ("queue","Reception Queue","M4 6h16M4 12h10M4 18h7M19 15l3 3-3 3"),
-    ("referrals","Doctor Request","M22 2L11 13M22 2l-7 20-4-9-9-4z"),
-    ("consult","Consultation","M8 2h8a2 2 0 012 2v16l-6-3-6 3V4a2 2 0 012-2z"),
-    ("lab","Laboratory","M9 2v6l-5 9a2 2 0 002 3h12a2 2 0 002-3l-5-9V2M8 2h8"),
-    ("radiology","Radiology","M12 2a10 10 0 100 20 10 10 0 000-20zM12 6v6l4 2"),
-    ("doctors","Referring Doctors","M12 8a4 4 0 100-8 4 4 0 000 8zM4 21c0-4 4-6 8-6s8 2 8 6"),
-    ("donors","Blood Bank","M12 21C7 17 4 13 4 9a8 8 0 0116 0c0 4-3 8-8 12z"),
-    ("vaccinations","Vaccination","M19 5l-2-2m1 3l-7 7m-4 8l-3-3 8-8 3 3-8 8zM14 4l6 6"),
+ ("Overview", [
+    ("dashboard", "Dashboard", "M3 13h8V3H3zM13 21h8V3h-8zM3 21h8v-6H3z"),
+    ("apps", "All Modules", "M3 3h7v7H3zM14 3h7v7h-7zM14 14h7v7h-7zM3 14h7v7H3z"),
+    ("chat", "Chat", "M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"),
  ]),
- ("Quality · Tayada", [
-    ("sops","SOPs & Documents","M6 2h9l5 5v15H6zM9 12h6M9 16h6"),
-    ("incidents","Incidents","M12 2L2 20h20L12 2zm0 7v5m0 3v.1"),
+ ("Clinical", [
+    ("patients", "Patients", "M12 8a4 4 0 100-8 4 4 0 000 8zM4 21c0-4 4-6 8-6s8 2 8 6"),
+    ("queue", "Reception Queue", "M4 6h16M4 12h10M4 18h7M19 15l3 3-3 3"),
+    ("referrals", "Doctor Request", "M22 2L11 13M22 2l-7 20-4-9-9-4z"),
+    ("consult", "Consultation", "M8 2h8a2 2 0 012 2v16l-6-3-6 3V4a2 2 0 012-2z"),
+    ("doctors", "Referring Doctors", "M12 8a4 4 0 100-8 4 4 0 000 8zM4 21c0-4 4-6 8-6s8 2 8 6"),
+    ("donors", "Blood Bank", "M12 21C7 17 4 13 4 9a8 8 0 0116 0c0 4-3 8-8 12z"),
+    ("vaccinations", "Vaccination", "M19 5l-2-2m1 3l-7 7m-4 8l-3-3 8-8 3 3-8 8zM14 4l6 6"),
  ]),
- ("Billing · Biil", [
-    ("invoices","Billing & Cashier","M6 2h9l5 5v15H6zM9 12h6M9 16h6M9 8h2"),
-    ("dailytx","Daily Transactions","M4 4v16h16M8 16l3-4 3 3 4-6"),
+ ("Diagnostics", [
+    ("lab", "Laboratory", "M9 2v6l-5 9a2 2 0 002 3h12a2 2 0 002-3l-5-9V2M8 2h8"),
+    ("radiology", "Radiology", "M12 2a10 10 0 100 20 10 10 0 000-20zM12 6v6l4 2"),
  ]),
- ("Accounting · Xisaab", [
-    ("acct","Accounting","M4 4h16v4H4zM4 10h16v4H4zM4 16h16v4H4z"),
-    ("findash","Financial Dashboard","M3 13h4v8H3zM10 3h4v18h-4zM17 9h4v12h-4z"),
-    ("payables","Commission Payables","M3 6h18v12H3zM3 10h18M7 15h4"),
-    ("fa_dash","Fixed Assets","M3 21h18M5 21V7l7-4 7 4v14M9 9h.01M15 9h.01M9 13h.01"),
+ ("Billing", [
+    ("invoices", "Billing & Cashier", "M6 2h9l5 5v15H6zM9 12h6M9 16h6M9 8h2"),
+    ("dailytx", "Daily Transactions", "M4 4v16h16M8 16l3-4 3 3 4-6"),
+    ("payables", "Commission Payables", "M3 6h18v12H3zM3 10h18M7 15h4"),
+ ]),
+ ("Pharmacy & Inventory", [
+    ("pharmacy", "Pharmacy", "M10 3H6a2 2 0 00-2 2v4l8 8 6-6-8-8zM3 21h18"),
+    ("suppliers", "Inventory", "M20 7H4l1 13h14zM9 7V4h6v3M3 9h18"),
  ]),
  ("Management", [
-    ("pharmacy","Pharmacy","M10 3H6a2 2 0 00-2 2v4l8 8 6-6-8-8zM3 21h18"),
-    ("suppliers","Inventory","M20 7H4l1 13h14zM9 7V4h6v3M3 9h18"),
-    ("employees","Human Resources","M9 8a3 3 0 100-6 3 3 0 000 6zM2 21c0-3 3-5 7-5s7 2 7 5"),
-    ("assets","Assets & Maintenance","M14.7 6.3a5 5 0 00-6.6 6.6L3 18v3h3l5.1-5.1a5 5 0 006.6-6.6l-3 3-2.6-2.6 3-3z"),
-    ("logistics","Logistics","M1 3h15v13H1zM16 8h4l3 3v5h-7M5.5 19a1.5 1.5 0 100-3 1.5 1.5 0 000 3zM18.5 19a1.5 1.5 0 100-3 1.5 1.5 0 000 3z"),
+    ("employees", "Human Resources", "M9 8a3 3 0 100-6 3 3 0 000 6zM2 21c0-3 3-5 7-5s7 2 7 5"),
+    ("assets", "Assets & Maintenance", "M14.7 6.3a5 5 0 00-6.6 6.6L3 18v3h3l5.1-5.1a5 5 0 006.6-6.6l-3 3-2.6-2.6 3-3z"),
+    ("fa_dash", "Fixed Assets", "M3 21h18M5 21V7l7-4 7 4v14M9 9h.01M15 9h.01M9 13h.01"),
+    ("logistics", "Logistics", "M1 3h15v13H1zM16 8h4l3 3v5h-7M5.5 19a1.5 1.5 0 100-3 1.5 1.5 0 000 3zM18.5 19a1.5 1.5 0 100-3 1.5 1.5 0 000 3z"),
+    ("sops", "SOPs & Documents", "M6 2h9l5 5v15H6zM9 12h6M9 16h6"),
+    ("incidents", "Incidents", "M12 2L2 20h20L12 2zm0 7v5m0 3v.1"),
  ]),
-    ("Admin", [
-        ("reports","Reports","M4 4v16h16M8 16l3-4 3 3 4-6"),
-        ("record_options","Record Options","M4 4h16v16H4zM8 9h8M8 13h5M8 17h8"),
-    ("users","Users","M9 8a3 3 0 100-6 3 3 0 000 6zM2 21c0-3 3-5 7-5M16 4a3 3 0 010 7M22 21c0-3-2-5-5-5"),
-    ("branches","Branches","M3 21h18M5 21V7l7-4 7 4v14M9 21v-6h6v6"),
-    ("audit","Audit Log","M9 12h6M9 16h6M6 2h9l5 5v13H6zM9 8h2"),
-    ("errorlog","Error Log","M12 2L2 20h20L12 2zm0 7v5m0 3v.1"),
-    ("syshealth","System Health","M3 12h4l3 8 4-16 3 8h4"),
-    ("svcmgmt","Service Management","M20 7h-9M14 17H5M17 17a3 3 0 100-6 3 3 0 000 6zM7 7a3 3 0 100 6 3 3 0 000-6z"),
-    ("settings","Settings","M12 15a3 3 0 100-6 3 3 0 000 6zM19.4 13a7.6 7.6 0 000-2l2-1.5-2-3.5-2.4 1a7 7 0 00-1.7-1L14 2h-4l-.8 2.5a7 7 0 00-1.7 1l-2.4-1-2 3.5L3.6 11a7.6 7.6 0 000 2L1.6 14.5l2 3.5 2.4-1a7 7 0 001.7 1L10 22h4l.8-2.5a7 7 0 001.7-1l2.4 1 2-3.5z"),
+ ("Administration", [
+    ("reports", "Reports", "M4 4v16h16M8 16l3-4 3 3 4-6"),
+    ("record_options", "Record Options", "M4 4h16v16H4zM8 9h8M8 13h5M8 17h8"),
+    ("users", "Users", "M9 8a3 3 0 100-6 3 3 0 000 6zM2 21c0-3 3-5 7-5M16 4a3 3 0 010 7M22 21c0-3-2-5-5-5"),
+    ("branches", "Branches", "M3 21h18M5 21V7l7-4 7 4v14M9 21v-6h6v6"),
+    ("audit", "Audit Log", "M9 12h6M9 16h6M6 2h9l5 5v13H6zM9 8h2"),
+    ("errorlog", "Error Log", "M12 2L2 20h20L12 2zm0 7v5m0 3v.1"),
+    ("syshealth", "System Health", "M3 12h4l3 8 4-16 3 8h4"),
+    ("svcmgmt", "Service Management", "M20 7h-9M14 17H5M17 17a3 3 0 100-6 3 3 0 000 6zM7 7a3 3 0 100 6 3 3 0 000-6z"),
+    ("settings", "Settings", "M12 15a3 3 0 100-6 3 3 0 000 6zM19.4 13a7.6 7.6 0 000-2l2-1.5-2-3.5-2.4 1a7 7 0 00-1.7-1L14 2h-4l-.8 2.5a7 7 0 00-1.7 1l-2.4-1-2 3.5L3.6 11a7.6 7.6 0 000 2L1.6 14.5l2 3.5 2.4-1a7 7 0 001.7 1L10 22h4l.8-2.5a7 7 0 001.7-1l2.4 1 2-3.5z"),
  ]),
 ]
 
@@ -680,7 +695,7 @@ def track_view(kind, rid, label, url):
 def recent_list():
     return session.get('recent', []) or []
 
-_REC_ICON = {'patient': '🧑', 'invoice': '🧾', 'receipt': '💵', 'lab': '🧪', 'radiology': '🩻', 'report': '📄'}
+_REC_ICON = {'patient': '•', 'invoice': '•', 'receipt': '•', 'lab': '•', 'radiology': '•', 'report': '•'}
 
 def _fav_menu(u, title=''):
     """Favorites dropdown: a star toggle for the current page + the user's pinned pages."""
@@ -688,16 +703,18 @@ def _fav_menu(u, title=''):
     favs = Favorite.query.filter_by(username=u.username).order_by(Favorite.id.desc()).limit(25).all() if u else []
     cur_url = (request.full_path.rstrip('?') if request else '') or '/'
     is_fav = any(f.url == cur_url for f in favs)
+    star_ic = "<svg width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' style='vertical-align:middle'><polygon points='12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2'></polygon></svg>"
+    star_filled = "<svg width='14' height='14' viewBox='0 0 24 24' fill='currentColor' stroke='currentColor' stroke-width='2' style='vertical-align:middle'><polygon points='12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2'></polygon></svg>"
     items = ''.join(
-        f"<a href='{h(f.url)}'><span class='ri'>⭐</span><span>{h(f.label)}</span></a>" for f in favs
+        f"<a href='{h(f.url)}'><span class='ri'>{star_filled}</span><span>{h(f.label)}</span></a>" for f in favs
     ) or "<div style='padding:12px 14px;color:var(--muted);font-size:12.5px'>No favorites yet — star a page to pin it here.</div>"
     toggle = (
         f"<form method='post' action='{url_for('dash.favorite_toggle')}' style='padding:8px 10px;border-bottom:1px solid var(--line)'>"
         f"<input type='hidden' name='url' value=\"{h(cur_url)}\"><input type='hidden' name='label' value=\"{h(title)}\">"
         f"<input type='hidden' name='next' value=\"{h(cur_url)}\">"
-        f"<button class='btn sm' style='width:100%'>{'★ Remove from favorites' if is_fav else '☆ Add this page'}</button></form>")
+        f"<button class='btn sm' style='width:100%'>{'Remove from favorites' if is_fav else 'Add this page'}</button></form>")
     return ("<div class='recent-wrap'><button type='button' class='btn sm' title='Favorites' "
-            f"onclick=\"this.parentNode.classList.toggle('open')\">{'★' if is_fav else '☆'}</button>"
+            f"onclick=\"this.parentNode.classList.toggle('open')\">{star_filled if is_fav else star_ic}</button>"
             f"<div class='recent-menu'><div class='recent-h'>Favorites</div>{toggle}{items}</div></div>")
 
 
@@ -719,12 +736,13 @@ def next_step(url, label, hint=''):
 
 def _recent_menu():
     items = recent_list()
+    clock_ic = "<svg width='15' height='15' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' style='vertical-align:middle'><circle cx='12' cy='12' r='10'></circle><polyline points='12 6 12 12 16 14'></polyline></svg>"
     if not items:
         inner = "<div style='padding:12px 14px;color:var(--muted);font-size:12.5px'>No recent records yet.</div>"
     else:
         inner = ''.join(f"<a href='{h(x['u'])}'><span class='ri'>{_REC_ICON.get(x['k'],'•')}</span><span>{h(x['l'])}</span></a>" for x in items)
     return ("<div class='recent-wrap'><button type='button' class='btn sm' title='Recently viewed' "
-            "onclick=\"this.parentNode.classList.toggle('open')\">🕘</button>"
+            f"onclick=\"this.parentNode.classList.toggle('open')\">{clock_ic}</button>"
             f"<div class='recent-menu'><div class='recent-h'>Recently viewed</div>{inner}</div></div>")
 
 def id_link(kind, rid, text=None):
@@ -853,17 +871,18 @@ def nav_html(active):
                 is_active = (key==active)
             if is_active: sec_active = True
             cls = 'active' if is_active else ''
-            rendered.append(f"<a class='{cls}' href='{href}'><svg class='ic' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><path d='{path}'/></svg>{h(label)}</a>")
+            rendered.append(f"<a class='{cls}' href='{href}' data-tooltip='{h(label)}'><svg class='ic' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><path d='{path}'/></svg><span class='nav-text'>{h(label)}</span></a>")
         if not rendered:
             continue
+        chev_svg = "<svg class='chev' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><polyline points='9 18 15 12 9 6'></polyline></svg>"
         if group == first_group:                     # Overview stays open (short, always handy)
-            out.append(f"<div class='g g-static'>{h(group)}</div>")
+            out.append(f"<div class='g g-static'><span>{h(group)}</span></div>")
             out.extend(rendered)
         else:                                        # other sections collapse (open only if active)
             opencls = ' open' if sec_active else ''
             out.append(f"<div class='navsec{opencls}'>"
                        f"<button type='button' class='gbtn' onclick='this.parentNode.classList.toggle(\"open\")'>"
-                       f"<span>{h(group)}</span><span class='chev'>›</span></button>"
+                       f"<span>{h(group)}</span>{chev_svg}</button>"
                        f"<div class='navsub'>{''.join(rendered)}</div></div>")
     return ''.join(out)
 
@@ -905,7 +924,7 @@ ACCT_MENUBAR = [
         ("apaging", "Payable Report (AP Aging)"),
         ("revreport", "Department / Revenue Analysis"),
         ("_hd3", "— Commission —"),
-        ("paycenter", "💳 Pay Center (Deynaha)"),
+        ("paycenter", "Pay Center (Deynaha)"),
         ("payables", "Commission Payables"),
         ("commission", "Doctor Commission Report"),
         ("radfees", "Radiologist Fees"),
@@ -913,7 +932,7 @@ ACCT_MENUBAR = [
         ("budgetreport", "Budget vs Actual"),
         ("ccreport", "Cost Center Report"),
         ("ratios", "Financial Ratios"),
-        ("integrity", "🩺 Integrity / Reconciliation"),
+        ("integrity", "Integrity / Reconciliation"),
         ("taxreport", "Tax Report"),
     ]),
     ("Configuration", None, [
@@ -1095,18 +1114,21 @@ BAR_TRIGGER = {k: app for app, bar in APP_BARS.items()
 
 
 def subnav_html(active):
-    # Odoo-style dropdown menubar across the whole system
-    if active in ACCT_BAR_TRIGGER:
-        return _acct_menubar(active)
-    app_key = BAR_TRIGGER.get(active)
-    if app_key:
-        return _menubar(active, APP_BARS[app_key])
+    """Compact page-level tabs for module-specific sub-navigation."""
     g = KEY2GROUP.get(active)
-    if not g: return ''
-    label, items = GROUPS[g]
-    vis = [(k,lb) for k,lb in items if can(k)]
-    if len(vis) <= 1: return ''
-    tabs = ''.join(f"<a class='{'on' if k==active else ''}' href='{url_for('modules.module',mod=k)}'>{h(lb)}</a>" for k,lb in vis)
+    if not g:
+        return ''
+    val = GROUPS.get(g)
+    if isinstance(val, tuple) and len(val) == 2 and isinstance(val[1], list):
+        label, items = val
+    elif isinstance(val, list):
+        label, items = GROUP_LABEL.get(g, 'Navigation'), val
+    else:
+        return ''
+    vis = [(k, lb) for k, lb in items if isinstance(k, str) and not k.startswith('_') and can(k)]
+    if len(vis) <= 1:
+        return ''
+    tabs = ''.join(f"<a class='{'on' if k==active else ''}' href='{url_for('modules.module',mod=k)}'>{h(lb)}</a>" for k, lb in vis)
     return f"<div class='subnav'><span class='subnav-t'>{h(label)}</span>{tabs}</div>"
 
 def _darken(hexc, f=0.72):
@@ -1130,10 +1152,12 @@ def _bell(u):
         n = unseen_count(u)
     except Exception:
         n = 0
-    badge = (f"<span style='position:absolute;top:-5px;right:-6px;background:var(--red);color:#fff;"
-             f"border-radius:10px;font-size:10px;font-weight:700;padding:1px 5px'>{n}</span>") if n else ''
+    badge = (f"<span style='font-size:0;line-height:0;width:0;height:0;display:inline-block;overflow:hidden'>🔔"
+             f"<span style='position:absolute;top:-4px;right:-4px;background:var(--red);color:#fff;"
+             f"border-radius:10px;font-size:10px;font-weight:700;padding:1px 5px'>{n}</span></span>") if n else ''
+    bell_ic = "<svg width='15' height='15' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' style='vertical-align:middle'><path d='M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9'></path><path d='M13.73 21a2 2 0 0 1-3.46 0'></path></svg>"
     return (f"<a class='btn sm' href='/notifications' title='Notifications' "
-            f"style='position:relative'>🔔{badge}</a>")
+            f"style='position:relative'>{bell_ic}{badge}</a>")
 
 
 PRINT_CSS = """

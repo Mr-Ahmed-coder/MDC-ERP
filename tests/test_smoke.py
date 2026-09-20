@@ -2510,22 +2510,22 @@ def test_accounting_home_and_partner_ledger(app, client):
 
 def test_odoo_style_accounting_menubar(app, client):
     _login(client)
-    # menubar with 6 top menus on accounting screens
-    for pg_ in ('/m/acct', '/m/journal', '/m/invoices', '/m/findash', '/m/accounts'):
+    # menubar with 8 top menus on accounting screens
+    for pg_ in ('/m/acctdash', '/m/jentries', '/m/genledger', '/m/accounts'):
         d = client.get(pg_).get_data(as_text=True)
-        assert "<div class='mbar'>" in d, pg_
-        for top in ('Dashboard', 'Customers', 'Vendors', 'Accounting', 'Reporting', 'Configuration'):
-            assert top in d, f'{top} on {pg_}'
+        assert 'mbar-desktop' in d, pg_
+        for top in ('Overview', 'Transactions', 'Ledgers', 'Receivables &amp; Payables', 'Banking', 'Planning &amp; Analysis', 'Reports', 'Configuration'):
+            assert top in d or top.replace('&amp;', '&') in d, f'{top} on {pg_}'
     # dropdown items are present and grouped
-    d = client.get('/m/acct').get_data(as_text=True)
-    for item in ('Patient Invoices', 'Vendor Bills', 'Journal Entries', 'Partner Ledger',
+    d = client.get('/m/acctdash').get_data(as_text=True)
+    for item in ('Accounting Center', 'Journal Entries', 'Partner Ledger',
                  'Commission Payables', 'Chart of Accounts', 'Fiscal Periods'):
         assert item in d, item
-    # the menubar is now system-wide: clinical screens get the clinical bar
+    # clinical screens get the clinical bar
     d = client.get('/m/patients').get_data(as_text=True)
     assert "<div class='mbar'>" in d and 'Blood Bank' in d
-    # but they do NOT get accounting menus
-    assert 'Vendor Bills' not in d
+    # but they do NOT get accounting dropdown items
+    assert 'Commission Payables' not in d
     # every link in the menubar resolves
     from mdc_erp.core.ui import ACCT_MENUBAR
     for _t, _i, subs in ACCT_MENUBAR:
@@ -2540,14 +2540,14 @@ def test_odoo_style_accounting_menubar(app, client):
 def test_system_wide_menubars(client):
     _login(client)
     checks = {
-        '/m/patients': ('Patients ▾', 'Doctor Requests ▾', 'Blood Bank ▾'),
-        '/m/lab': ('Laboratory ▾', 'Radiology ▾'),
-        '/m/pharmacy': ('Pharmacy ▾', 'Inventory ▾', 'Procurement ▾'),
-        '/m/employees': ('Employees ▾', 'Time ▾', 'Payroll'),
-        '/m/sops': ('Quality ▾',),
-        '/m/assets': ('Assets ▾', 'Logistics'),
-        '/m/reports': ('Reports ▾',),
-        '/m/users': ('System ▾', 'Logs ▾'),
+        '/m/patients': ('Patients', 'Doctor Requests', 'Blood Bank'),
+        '/m/lab': ('Laboratory', 'Radiology'),
+        '/m/pharmacy': ('Pharmacy', 'Inventory', 'Procurement'),
+        '/m/employees': ('Employees', 'Time', 'Payroll'),
+        '/m/sops': ('Quality',),
+        '/m/assets': ('Assets', 'Logistics'),
+        '/m/reports': ('Reports',),
+        '/m/users': ('System', 'Logs'),
     }
     for pg_, toks in checks.items():
         d = client.get(pg_).get_data(as_text=True)

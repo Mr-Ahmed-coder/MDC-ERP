@@ -1,4 +1,4 @@
-"""Accounting Dashboard (Odoo-18-style) tests. Self-contained."""
+"""Accounting Center (Odoo-18-style) tests. Self-contained."""
 import pytest
 
 from mdc_erp import create_app
@@ -48,7 +48,8 @@ def _client(app, role='super_admin'):
 
 
 CARDS = [b'Cash Balance', b'Bank Balance', b'Accounts Receivable', b'Accounts Payable',
-         b'Monthly Revenue', b'Monthly Expenses', b'Net Profit', b'Profit &amp; Loss Summary',
+         b'Unpaid Invoices', b'Monthly Revenue', b'Monthly Expenses', b'Net Profit',
+         b'Profit &amp; Loss Summary', b'Requires Attention',
          b'Outstanding Invoices', b'Overdue Invoices', b'Recent Payments', b'Recent Journal Entries']
 
 
@@ -58,6 +59,47 @@ def test_all_cards_present(app):
     assert r.status_code == 200
     for card in CARDS:
         assert card in r.data, f'missing card: {card}'
+
+
+def test_financial_navigation_bar(app):
+    c = _client(app)
+    d = c.get('/m/acctdash').get_data(as_text=True)
+    assert 'mbar-desktop' in d
+    assert 'mbar-mobile-wrap' in d
+    assert 'Overview' in d
+    assert 'Transactions' in d
+    assert 'Ledgers' in d
+    assert 'Receivables &amp; Payables' in d or 'Receivables & Payables' in d
+    assert 'Banking' in d
+    assert 'Planning &amp; Analysis' in d or 'Planning & Analysis' in d
+    assert 'Reports' in d
+    assert 'Configuration' in d
+    assert 'General Ledger' in d
+    assert 'Chart of Accounts' in d
+    assert 'Journal Entries' in d
+    assert 'Cash Flow' in d
+    assert 'AR Aging' in d
+    assert 'AP Aging' in d
+    assert 'Bank Reconciliation' in d
+    assert 'Fiscal Periods' in d
+
+
+def test_accounting_grouped_menubar_active_state_and_permissions(app):
+    c = _client(app, 'super_admin')
+    d_dash = c.get('/m/acctdash').get_data(as_text=True)
+    # Overview should be active on /m/acctdash
+    assert 'class="mb-top on" href="/acctdash">Overview</a>' in d_dash or 'class="mb-top on" href="/m/acctdash">Overview</a>' in d_dash
+
+    # Opening General Ledger should highlight Ledgers group and General Ledger link
+    d_gl = c.get('/m/genledger').get_data(as_text=True)
+    assert 'General Ledger' in d_gl
+    assert 'mb-top on' in d_gl
+
+    # User without accounting access should not get the accounting menubar
+    c_lt = _client(app, 'lab_tech')
+    if c_lt:
+        d_lt = c_lt.get('/dashboard').get_data(as_text=True)
+        assert '<div class="mbar-desktop">' not in d_lt
 
 
 def test_controls_present(app):
@@ -76,6 +118,25 @@ def test_date_and_branch_filters_apply(app):
     assert r.status_code == 200
     # branch filter param accepted
     assert c.get('/m/acctdash?branch=1').status_code == 200
+
+
+def test_branch_isolation_and_null_historical_entries(app):
+    with app.app_context():
+        from mdc_erp.extensions import db
+        from mdc_erp.core.posting import post_journal
+        # Create postings: one for branch 1, one for branch 2, one with branch_id = None (historical)
+        post_journal('2026-08-10', 'REF-B1', 'Branch 1 revenue', [('1101', 500, 0), ('4400', 0, 500)], branch_id=1)
+        post_journal('2026-08-10', 'REF-B2', 'Branch 2 revenue', [('1101', 300, 0), ('4400', 0, 300)], branch_id=2)
+        post_journal('2026-08-10', 'REF-HIST', 'Historical revenue', [('1101', 100, 0), ('4400', 0, 100)], branch_id=None)
+
+    c = _client(app)
+    # All branches should include all
+    r_all = c.get('/m/acctdash?from=2026-08-01&to=2026-08-31')
+    assert r_all.status_code == 200
+
+    # Branch 1 specific filter
+    r_b1 = c.get('/m/acctdash?from=2026-08-01&to=2026-08-31&branch=1')
+    assert r_b1.status_code == 200
 
 
 def test_exports(app):

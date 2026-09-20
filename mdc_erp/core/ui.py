@@ -233,19 +233,35 @@ body.dark .stmt .sec{color:var(--teal)}
 .subnav a{padding:8px 15px;border-radius:8px;font-weight:600;font-size:13px;color:var(--muted);text-decoration:none}
 .subnav a:hover{background:var(--canvas);color:var(--ink)}
 .subnav a.on{background:var(--petrol);color:#fff}
-/* ---- Odoo-style accounting menubar ---- */
-.mbar{display:flex;align-items:center;gap:2px;background:var(--petrol);border-radius:12px;padding:4px 10px;margin-bottom:18px;flex-wrap:wrap;box-shadow:var(--shadow);position:relative;z-index:50}
-.mb-top{display:inline-block;padding:9px 15px;color:#CFE0E4;font-weight:600;font-size:13.5px;border-radius:8px;cursor:pointer;text-decoration:none;white-space:nowrap}
+/* ---- Accounting 8-Group Menubar ---- */
+.mbar-desktop{display:flex;align-items:center;gap:4px;background:var(--petrol);border-radius:12px;padding:5px 10px;margin-bottom:18px;flex-wrap:nowrap;box-shadow:var(--shadow);position:relative;z-index:50}
+.mb-top{display:inline-flex;align-items:center;gap:5px;padding:8px 12px;color:#CFE0E4;font-weight:600;font-size:13px;border-radius:8px;cursor:pointer;text-decoration:none;white-space:nowrap;background:transparent;border:none;transition:all .15s ease}
 .mb-item{position:relative}
-.mb-item:hover .mb-top,.mb-top:hover{background:rgba(255,255,255,.12);color:#fff}
-.mb-top.on{background:var(--amber);color:var(--petrol-700, #0B2E35)}
-.mb-drop{display:none;position:absolute;top:100%;left:0;min-width:250px;background:var(--surface);border:1px solid var(--line);border-radius:0 0 12px 12px;box-shadow:0 12px 28px rgba(11,46,53,.22);padding:6px;z-index:60;max-height:70vh;overflow:auto}
-.mb-item:hover .mb-drop{display:block}
-.mb-drop a{display:block;padding:8px 12px;border-radius:8px;color:var(--ink);font-size:13px;font-weight:500;text-decoration:none;white-space:nowrap}
+.mb-item:hover .mb-top,.mb-item.open .mb-top,.mb-top:hover{background:rgba(255,255,255,.14);color:#fff}
+.mb-top.on{background:var(--amber);color:var(--petrol-700,#0B2E35)!important;font-weight:700}
+.mb-top.on:hover{background:var(--amber);color:var(--petrol-700,#0B2E35)}
+.mb-chev{transition:transform .15s ease;opacity:.85}
+.mb-item.open .mb-chev{transform:rotate(180deg)}
+.mb-drop{display:none;position:absolute;top:calc(100% + 4px);left:0;min-width:210px;background:var(--surface);border:1px solid var(--line);border-radius:10px;box-shadow:0 12px 28px rgba(11,46,53,.22);padding:6px;z-index:60;max-height:70vh;overflow-y:auto}
+.mb-item:hover .mb-drop,.mb-item.open .mb-drop{display:block}
+.mb-drop a{display:block;padding:8px 12px;border-radius:7px;color:var(--ink);font-size:13px;font-weight:500;text-decoration:none;white-space:nowrap;transition:background .15s ease}
 .mb-drop a:hover{background:var(--canvas);color:var(--petrol)}
-.mb-drop a.on{background:var(--petrol);color:#fff}
-.mb-hd{padding:8px 12px 3px;font-size:10.5px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.5px}
-@media(max-width:860px){.mbar{overflow-x:auto;flex-wrap:nowrap}.mb-drop{position:fixed;left:12px;right:12px;min-width:0}}
+.mb-drop a.on{background:var(--petrol);color:#fff;font-weight:600}
+
+/* Mobile Accounting Selector (<860px) */
+.mbar-mobile-wrap{display:none;margin-bottom:18px;position:relative;z-index:50}
+.mbar-mobile-btn{width:100%;display:flex;align-items:center;justify-content:space-between;background:var(--petrol);color:#fff;padding:10px 14px;border-radius:10px;font-weight:600;font-size:13.5px;border:none;cursor:pointer}
+.mbar-mobile-drawer{display:none;background:var(--surface);border:1px solid var(--line);border-radius:10px;margin-top:6px;padding:8px;box-shadow:var(--shadow)}
+.mbar-mobile-drawer.open{display:block}
+.mbar-mobile-group-ttl{font-size:11px;font-weight:700;color:var(--petrol);text-transform:uppercase;letter-spacing:.5px;padding:8px 10px 4px;margin-top:4px}
+.mbar-mobile-group-ttl:first-child{margin-top:0}
+.mbar-mobile-drawer a{display:block;padding:8px 12px;border-radius:6px;color:var(--ink);font-size:13px;text-decoration:none;font-weight:500}
+.mbar-mobile-drawer a.on{background:var(--petrol);color:#fff;font-weight:600}
+
+@media(max-width:860px){
+  .mbar-desktop{display:none!important}
+  .mbar-mobile-wrap{display:block!important}
+}
 .chart{width:100%;height:190px}.chart text{font-size:10px;fill:var(--muted)}
 .scrim{position:fixed;inset:0;background:rgba(0,0,0,.35);z-index:35;display:none}
 @media(max-width:860px){.sidebar{transform:translateX(-100%)}.sidebar.open{transform:none}.main{margin-left:0}.menu-btn{display:block}.kpis{grid-template-columns:1fr 1fr}.grid2,.fg{grid-template-columns:1fr}.chip small{display:none}.scrim.show{display:block}.wgs{grid-template-columns:repeat(3,1fr)}.cats{grid-template-columns:1fr 1fr}.top{padding:0 12px;gap:8px}.top h1{font-size:16px}.top input{width:140px!important}.apps-label{display:none}.quick-create-menu{position:fixed;right:12px;top:58px}}
@@ -540,6 +556,14 @@ NAVDEF = [
     ("invoices", "Billing & Cashier", "M6 2h9l5 5v15H6zM9 12h6M9 16h6M9 8h2"),
     ("dailytx", "Daily Transactions", "M4 4v16h16M8 16l3-4 3 3 4-6"),
     ("payables", "Commission Payables", "M3 6h18v12H3zM3 10h18M7 15h4"),
+ ]),
+ ("Accounting", [
+    ("acctdash", "Accounting Center", "M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M6 2h12a2 2 0 012 2v16a2 2 0 01-2 2H6a2 2 0 01-2-2V4a2 2 0 012-2z"),
+    ("genledger", "General Ledger", "M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"),
+    ("coa", "Chart of Accounts", "M4 6h16M4 10h16M4 14h16M4 18h16"),
+    ("jentries", "Journal Entries", "M8 2h8a2 2 0 012 2v16l-6-3-6 3V4a2 2 0 012-2z"),
+    ("finance", "Financial Statements", "M4 4v16h16M8 16l3-4 3 3 4-6"),
+    ("bankrec", "Bank Reconciliation", "M3 10h18M7 15h4M4 4h16v16H4z"),
  ]),
  ("Pharmacy & Inventory", [
     ("pharmacy", "Pharmacy", "M10 3H6a2 2 0 00-2 2v4l8 8 6-6-8-8zM3 21h18"),
@@ -854,14 +878,26 @@ def _app_launcher(active=''):
 
 def nav_html(active):
     ag = KEY2GROUP.get(active)
+    is_acct_active = (active in ('acctdash', 'acct', 'findash', 'genledger', 'coa', 'accounts', 'jentries', 'journal', 'finance', 'pnl', 'balance_sheet', 'cashflow', 'bankrec')
+                      or ag == 'accounting'
+                      or (request and (request.path.startswith('/acctdash') or request.path.startswith('/gl') or request.path.startswith('/journal') or request.path.startswith('/coa'))))
     first_group = NAVDEF[0][0] if NAVDEF else None
     out = []
     for group, items in NAVDEF:
         rendered = []
         sec_active = False
         for key,label,path in items:
-            g = KEY2GROUP.get(key)
-            if g:
+            if key == 'acctdash':
+                if not (can('acctdash') or can('accounting')):
+                    continue
+                href = url_for('acctdash.acct_dashboard')
+                is_active = (active in ('acctdash', 'acct', 'findash') or (request and request.path == '/acctdash'))
+            elif group == "Accounting":
+                if not can(key):
+                    continue
+                href = url_for('dash.dashboard') if key=='dashboard' else url_for('modules.module', mod=key)
+                is_active = (key == active or (key == 'coa' and active == 'accounts') or (key == 'jentries' and active == 'journal'))
+            elif g := KEY2GROUP.get(key):
                 subs = [k for k,_ in GROUPS[g][1] if can(k)]
                 if not subs: continue
                 href = url_for('modules.module', mod=subs[0]); is_active = (ag==g)
@@ -879,7 +915,7 @@ def nav_html(active):
             out.append(f"<div class='g g-static'><span>{h(group)}</span></div>")
             out.extend(rendered)
         else:                                        # other sections collapse (open only if active)
-            opencls = ' open' if sec_active else ''
+            opencls = ' open' if (sec_active or (group == "Accounting" and is_acct_active)) else ''
             out.append(f"<div class='navsec{opencls}'>"
                        f"<button type='button' class='gbtn' onclick='this.parentNode.classList.toggle(\"open\")'>"
                        f"<span>{h(group)}</span>{chev_svg}</button>"
@@ -887,66 +923,217 @@ def nav_html(active):
     return ''.join(out)
 
 ACCT_MENUBAR = [
-    ("Dashboard", None, [("acct", "Dashboard")]),
-    ("Customers", None, [
-        ("invoices", "Patient Invoices"),
-        ("creditnotes", "Credit Notes"),
-        ("payalloc", "Customer Payments"),
-        ("dailytx", "Daily Transactions"),
-        ("services", "Products & Services"),
-        ("patients", "Customer List (Patients)"),
+    ("Overview", "acctdash", [
+        ("acctdash", "Accounting Center"),
     ]),
-    ("Vendors", None, [
-        ("purchases", "Vendor Bills"),
-        ("debitnotes", "Vendor Refunds (Debit Notes)"),
-        ("expenses", "Purchase & Other Expenses"),
-        ("suppliers", "Vendor List"),
-    ]),
-    ("Accounting", None, [
-        ("journal", "Journal Entries"),
+    ("Transactions", "jentries", [
+        ("jentries", "Journal Entries"),
         ("recurjournals", "Recurring Journals"),
-        ("_hd1", "— Ledgers —"),
-        ("ledger", "General Ledger"),
-        ("partnerledger", "Partner Ledger"),
-        ("_hd2", "— Management —"),
-        ("budgets", "Budgets"),
-        ("assets", "Assets"),
-        ("banks", "Bank Accounts"),
-        ("bankrecon", "Bank Statements / Reconciliation"),
-        ("cashclose", "Cash Registers (Daily Closing)"),
-        ("costcenters", "Cost Centers"),
-    ]),
-    ("Reporting", None, [
-        ("findash", "Financial Dashboard"),
-        ("finance", "P&L · Balance Sheet · Trial Balance"),
-        ("cashflow", "Cash Flow"),
-        ("araging", "Receivable Report (AR Aging)"),
-        ("apaging", "Payable Report (AP Aging)"),
-        ("revreport", "Department / Revenue Analysis"),
-        ("_hd3", "— Commission —"),
-        ("paycenter", "Pay Center (Deynaha)"),
+        ("expenses", "Expenses"),
         ("payables", "Commission Payables"),
-        ("commission", "Doctor Commission Report"),
-        ("radfees", "Radiologist Fees"),
-        ("_hd4", "— Analysis —"),
+    ]),
+    ("Ledgers", "genledger", [
+        ("genledger", "General Ledger"),
+        ("partnerledger", "Partner Ledger"),
+        ("coa", "Chart of Accounts"),
+    ]),
+    ("Receivables & Payables", "araging", [
+        ("araging", "AR Aging"),
+        ("apaging", "AP Aging"),
+    ]),
+    ("Banking", "banks", [
+        ("banks", "Bank Accounts"),
+        ("bankrec", "Bank Reconciliation"),
+        ("cashflow", "Cash Flow"),
+    ]),
+    ("Planning & Analysis", "budgets", [
+        ("budgets", "Budgets"),
         ("budgetreport", "Budget vs Actual"),
+        ("costcenters", "Cost Centers"),
         ("ccreport", "Cost Center Report"),
         ("ratios", "Financial Ratios"),
-        ("integrity", "Integrity / Reconciliation"),
+        ("revreport", "Revenue Analysis"),
+    ]),
+    ("Reports", "finance", [
+        ("finance", "Financial Statements"),
         ("taxreport", "Tax Report"),
     ]),
-    ("Configuration", None, [
-        ("accounts", "Chart of Accounts"),
+    ("Configuration", "fiscal", [
+        ("fiscal", "Fiscal Periods"),
         ("currencies", "Currencies"),
-        ("fiscal", "Fiscal Periods (Lock Dates)"),
-        ("svcmgmt", "Service Management"),
-        ("banks", "Banks"),
-        ("settings", "Settings"),
     ]),
 ]
 
-# every module key that should display the accounting menubar
-ACCT_KEYS = {k for _t, _i, its in ACCT_MENUBAR for k, _l in its if not k.startswith('_')}
+ACCT_KEYS = {
+    'acctdash', 'acct', 'findash', 'jentries', 'journal', 'jitems', 'recurjournals',
+    'expenses', 'payables', 'paycenter', 'genledger', 'ledger', 'gldash', 'partnerledger',
+    'coa', 'accounts', 'acctbal', 'trialbal', 'araging', 'apaging', 'banks', 'bankrec',
+    'bankrecon', 'cashflow', 'budgets', 'budgetreport', 'costcenters', 'ccreport',
+    'ratios', 'revreport', 'finance', 'pnl', 'balance_sheet', 'taxreport', 'fiscal', 'currencies'
+}
+
+ACCT_BAR_TRIGGER = ACCT_KEYS
+
+
+def _can_acct(key):
+    perm_map = {
+        'acctdash': ('acctdash', 'accounting', 'findash', 'acct'),
+        'jentries': ('jentries', 'journal', 'accounting', 'genledger'),
+        'recurjournals': ('recurjournals', 'journal', 'accounting'),
+        'expenses': ('expenses', 'accounting', 'purchases'),
+        'payables': ('payables', 'accounting', 'commission'),
+        'genledger': ('genledger', 'ledger', 'accounting'),
+        'partnerledger': ('partnerledger', 'accounting', 'genledger'),
+        'coa': ('coa', 'accounts', 'accounting'),
+        'araging': ('araging', 'accounting', 'invoices'),
+        'apaging': ('apaging', 'accounting', 'purchases'),
+        'banks': ('banks', 'bankrec', 'accounting'),
+        'bankrec': ('bankrec', 'bankrecon', 'accounting'),
+        'cashflow': ('cashflow', 'accounting', 'finance'),
+        'budgets': ('budgets', 'accounting'),
+        'budgetreport': ('budgetreport', 'budgets', 'accounting'),
+        'costcenters': ('costcenters', 'accounting'),
+        'ccreport': ('ccreport', 'costcenters', 'accounting'),
+        'ratios': ('ratios', 'accounting', 'finance'),
+        'revreport': ('revreport', 'accounting', 'revenue'),
+        'finance': ('finance', 'accounting', 'genledger'),
+        'taxreport': ('taxreport', 'accounting'),
+        'fiscal': ('fiscal', 'accounting', 'settings'),
+        'currencies': ('currencies', 'accounting', 'settings'),
+    }
+    aliases = perm_map.get(key, (key, 'accounting'))
+    return any(can(p) for p in aliases)
+
+
+def _is_active_key(item_key, active):
+    if item_key == active:
+        return True
+    aliases = {
+        'acctdash': {'acctdash', 'acct', 'findash'},
+        'genledger': {'genledger', 'ledger', 'gldash'},
+        'coa': {'coa', 'accounts'},
+        'jentries': {'jentries', 'journal', 'jitems'},
+        'bankrec': {'bankrec', 'bankrecon'},
+        'finance': {'finance', 'pnl', 'balance_sheet', 'trialbal', 'acctbal'},
+    }
+    return active in aliases.get(item_key, set())
+
+
+def _acct_url(key):
+    try:
+        if key in ('acctdash', 'findash', 'acct'):
+            return url_for('acctdash.acct_dashboard')
+        if key in ('genledger', 'ledger', 'gldash'):
+            return url_for('modules.module', mod='genledger')
+        if key in ('coa', 'accounts'):
+            return url_for('modules.module', mod='accounts')
+        if key in ('jentries', 'journal', 'jitems'):
+            return url_for('modules.module', mod='jentries')
+        if key in ('bankrec', 'bankrecon'):
+            return url_for('modules.module', mod='bankrec')
+        return url_for('modules.module', mod=key)
+    except Exception:
+        return f"/{key}"
+
+
+def _acct_menubar(active):
+    desktop_items = []
+    mobile_groups = []
+    active_label = "Accounting Center"
+
+    chev_svg = ('<svg class="mb-chev" width="12" height="12" viewBox="0 0 24 24" fill="none" '
+                'stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">'
+                '<polyline points="6 9 12 15 18 9"></polyline></svg>')
+
+    for top_label, default_key, subs in ACCT_MENUBAR:
+        vis_subs = [(k, lbl) for k, lbl in subs if _can_acct(k)]
+        if not vis_subs:
+            continue
+
+        group_is_on = any(_is_active_key(k, active) for k, _ in vis_subs)
+
+        if top_label == "Overview" or (len(subs) == 1 and subs[0][0] == 'acctdash'):
+            k, lbl = vis_subs[0]
+            if group_is_on:
+                active_label = lbl
+            is_on = "on" if group_is_on else ""
+            desktop_items.append(f'<a class="mb-top {is_on}" href="{_acct_url(k)}">{h(top_label)}</a>')
+            mobile_groups.append(f'<div class="mbar-mobile-group"><a class="mbar-mobile-link {is_on}" href="{_acct_url(k)}">{h(lbl)}</a></div>')
+        else:
+            drop_links = []
+            mobile_links = []
+            for k, lbl in vis_subs:
+                item_is_on = _is_active_key(k, active)
+                if item_is_on:
+                    active_label = lbl
+                on_cls = "on" if item_is_on else ""
+                drop_links.append(f'<a class="{on_cls}" href="{_acct_url(k)}">{h(lbl)}</a>')
+                mobile_links.append(f'<a class="mbar-mobile-link {on_cls}" href="{_acct_url(k)}">{h(lbl)}</a>')
+
+            group_on_cls = "on" if group_is_on else ""
+            desktop_items.append(
+                f'<div class="mb-item">'
+                f'<button type="button" class="mb-top {group_on_cls}">{h(top_label)} {chev_svg}</button>'
+                f'<div class="mb-drop">{"".join(drop_links)}</div>'
+                f'</div>'
+            )
+            mobile_groups.append(
+                f'<div class="mbar-mobile-group">'
+                f'<div class="mbar-mobile-group-ttl">{h(top_label)}</div>'
+                f'{"".join(mobile_links)}'
+                f'</div>'
+            )
+
+    if not desktop_items:
+        return ""
+
+    js_script = (
+        "<script>\n"
+        "(function(){\n"
+        "  document.addEventListener('click', function(e){\n"
+        "    var mbar = document.querySelector('.mbar-desktop');\n"
+        "    if(!mbar) return;\n"
+        "    var item = e.target.closest('.mb-item');\n"
+        "    if(item && mbar.contains(item)){\n"
+        "      var topBtn = e.target.closest('.mb-top');\n"
+        "      if(topBtn){\n"
+        "        var isOpen = item.classList.contains('open');\n"
+        "        mbar.querySelectorAll('.mb-item').forEach(function(i){ i.classList.remove('open'); });\n"
+        "        if(!isOpen) item.classList.add('open');\n"
+        "        e.stopPropagation();\n"
+        "      }\n"
+        "    }else{\n"
+        "      mbar.querySelectorAll('.mb-item').forEach(function(i){ i.classList.remove('open'); });\n"
+        "    }\n"
+        "    var mwrap = document.querySelector('.mbar-mobile-wrap');\n"
+        "    if(mwrap && !mwrap.contains(e.target)){\n"
+        "      var mdrawer = mwrap.querySelector('.mbar-mobile-drawer');\n"
+        "      if(mdrawer) mdrawer.classList.remove('open');\n"
+        "    }\n"
+        "  });\n"
+        "  document.addEventListener('keydown', function(e){\n"
+        "    if(e.key === 'Escape'){\n"
+        "      document.querySelectorAll('.mb-item.open').forEach(function(i){ i.classList.remove('open'); });\n"
+        "      var mdrawer = document.querySelector('.mbar-mobile-drawer.open');\n"
+        "      if(mdrawer) mdrawer.classList.remove('open');\n"
+        "    }\n"
+        "  });\n"
+        "})();\n"
+        "</script>"
+    )
+
+    desktop_html = f'<div class="mbar-desktop">{"".join(desktop_items)}</div>'
+    mobile_html = (
+        f'<div class="mbar-mobile-wrap">'
+        f'<button type="button" class="mbar-mobile-btn" onclick="this.nextElementSibling.classList.toggle(\'open\')">'
+        f'<span>Accounting: {h(active_label)}</span>'
+        f'{chev_svg}'
+        f'</button>'
+        f'<div class="mbar-mobile-drawer">{"".join(mobile_groups)}</div>'
+        f'</div>'
+    )
+
+    return f'{desktop_html}{mobile_html}{js_script}'
 
 
 def _menubar(active, structure):
@@ -972,20 +1159,6 @@ def _menubar(active, structure):
         items += (f"<div class='mb-item'><span class='mb-top {'on' if is_on else ''}'>{h(top)} ▾</span>"
                   f"<div class='mb-drop'>{drop}</div></div>")
     return f"<div class='mbar'>{items}</div>"
-
-
-def _acct_menubar(active):
-    return _menubar(active, ACCT_MENUBAR)
-
-
-# screens on which the accounting menubar replaces the normal subnav
-ACCT_BAR_TRIGGER = {'acct', 'findash', 'payables', 'paycenter', 'integrity', 'partnerledger', 'journal',
-                    'recurjournals', 'ledger', 'budgets', 'banks', 'bankrecon',
-                    'costcenters', 'finance', 'cashflow', 'araging', 'apaging',
-                    'revreport', 'commission', 'radfees', 'budgetreport', 'ccreport',
-                    'ratios', 'taxreport', 'accounts', 'currencies', 'fiscal',
-                    'invoices', 'creditnotes', 'payalloc', 'dailytx', 'cashclose',
-                    'expenses', 'debitnotes'}
 
 # ---- Odoo-style menubars for every other app area ----
 CLINICAL_MENUBAR = [
@@ -1115,6 +1288,11 @@ BAR_TRIGGER = {k: app for app, bar in APP_BARS.items()
 
 def subnav_html(active):
     """Compact page-level tabs for module-specific sub-navigation."""
+    if active in ACCT_BAR_TRIGGER or active in ACCT_KEYS or KEY2GROUP.get(active) == 'accounting':
+        return _acct_menubar(active)
+    app = BAR_TRIGGER.get(active)
+    if app and app in APP_BARS:
+        return _menubar(active, APP_BARS[app])
     g = KEY2GROUP.get(active)
     if not g:
         return ''

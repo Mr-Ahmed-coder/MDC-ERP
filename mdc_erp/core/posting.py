@@ -87,9 +87,17 @@ def acc_ensure(code, name, atype, parent_code=None):
     return a
 
 
-def post_journal(date, ref, memo, lines):
+def post_journal(date, ref, memo, lines, branch_id=None):
     if not _period_open(date):
         raise PeriodClosedError(date)
+    if branch_id is None:
+        try:
+            from .security import cur_user
+            u = cur_user()
+            if u and getattr(u, 'branch_id', None):
+                branch_id = u.branch_id
+        except Exception:
+            pass
     real=[(acc(c), d, cr) for (c, d, cr) in lines if acc(c) and (d or cr)]
     if not real:
         # nothing to post — clear any prior entry under this ref and return
@@ -116,7 +124,7 @@ def post_journal(date, ref, memo, lines):
     # balanced — safe to (re)write the entry
     for e in JournalEntry.query.filter_by(ref=ref).all(): db.session.delete(e)
     db.session.flush()
-    je=JournalEntry(date=date or today(), ref=ref, memo=memo); db.session.add(je); db.session.flush()
+    je=JournalEntry(date=date or today(), ref=ref, memo=memo, branch_id=branch_id); db.session.add(je); db.session.flush()
     for a, d, cr in real:
         db.session.add(JournalLine(entry_id=je.id, account_id=a.id, debit=d or 0, credit=cr or 0))
     db.session.commit(); return je
@@ -190,7 +198,7 @@ def repost_invoice(inv):
     if contrast_inc > 0.005:
         acc_ensure('4450', 'Contrast Income', 'Income', '4000')
         lines.append(('4450', 0, contrast_inc))
-    post_journal(inv.date, ref, f"Invoice INV-{inv.id:04d} · {who}", lines)
+    post_journal(inv.date, ref, f"Invoice INV-{inv.id:04d} · {who}", lines, branch_id=getattr(inv, 'branch_id', None))
 
 def repost_payment(inv):
     ref=f"PAY-{inv.id:04d}"; _drop_reversals(ref); paid=inv.paid or 0
@@ -199,7 +207,8 @@ def repost_payment(inv):
     elif _acct: pm_account(inv.pay_method or 'Cash')   # ensure the per-provider wallet account exists
     if inv.status=='Cancelled' or not _acct: paid=0
     post_journal(inv.date, ref, f"Payment INV-{inv.id:04d} ({inv.pay_method or 'Cash'})",
-                 [(_acct or '1102', paid, 0), ('1200', 0, paid)] if paid>0 else [])
+                 [(_acct or '1102', paid, 0), ('1200', 0, paid)] if paid>0 else [],
+                 branch_id=getattr(inv, 'branch_id', None))
     # auto-accrue referring-doctor commission + radiologist fee once the invoice is fully paid
     try:
         accrue_commissions(inv)
@@ -222,7 +231,8 @@ def post_expense(e):
     # Post: Dr Expense / Cr Accounts Payable (the payment is a separate step that
     # clears the payable — like a vendor bill).
     post_journal(e.date, ref, f"Expense · {e.description or e.category or ''}",
-                 [(accode, amt, 0), ('2100', 0, amt)])
+                 [(accode, amt, 0), ('2100', 0, amt)],
+                 branch_id=getattr(e, 'branch_id', None))
 
 
 def repost_expense_payment(e):
@@ -237,7 +247,8 @@ def repost_expense_payment(e):
         return
     pay_acc = pm_account(e.pay_method or 'Cash')
     post_journal(e.date, ref, f"Expense Payment · {e.description or e.category or ''} ({e.pay_method or 'Cash'})",
-                 [('2100', paid, 0), (pay_acc, 0, paid)])
+                 [('2100', paid, 0), (pay_acc, 0, paid)],
+                 branch_id=getattr(e, 'branch_id', None))
 
 def post_purchase(p):
     ref = f"PUR-{p.id:04d}"
@@ -254,7 +265,8 @@ def post_purchase(p):
     # Accounts Payable. Registering a payment later credits cash/wallet and clears
     # the payable (handled by po_pay via repost_payment).
     post_journal(p.date, ref, f"Vendor Bill · {who}",
-                 [('1300', total, 0), ('2100', 0, total)])
+                 [('1300', total, 0), ('2100', 0, total)],
+                 branch_id=getattr(p, 'branch_id', None))
 
 
 def repost_purchase_payment(p):
@@ -270,7 +282,8 @@ def repost_purchase_payment(p):
     pay_acc = pm_account(_pm)
     who = (p.supplier.name if getattr(p, 'supplier', None) else (p.item or ''))
     post_journal(p.date, ref, f"Bill Payment · {who} ({_pm})",
-                 [('2100', paid, 0), (pay_acc, 0, paid)])
+                 [('2100', paid, 0), (pay_acc, 0, paid)],
+                 branch_id=getattr(p, 'branch_id', None))
 
 
 POST_HOOKS = {'expenses': post_expense, 'purchases': post_purchase}

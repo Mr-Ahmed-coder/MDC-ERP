@@ -153,3 +153,24 @@ def test_search_branch_scoping(app, client):
     login_as(client, app, 'user_super_admin')
     res_admin = client.get('/search?q=GuarantorB1')
     assert res_admin.status_code in (200, 302)
+
+def test_accounting_sidebar_visibility_authorized_roles(app, client):
+    authorized = ['super_admin', 'accountant', 'auditor', 'branch_manager']
+    for r in authorized:
+        login_as(client, app, f'user_{r}')
+        res = client.get('/dashboard')
+        assert res.status_code == 200
+        html = res.data.decode('utf-8')
+        assert 'Accounting' in html or 'Accounting Center' in html
+        assert '/acctdash' in html
+
+def test_accounting_sidebar_visibility_unauthorized_roles(app, client):
+    unauthorized = ['reception', 'nurse', 'lab_tech', 'radiologist', 'doctor']
+    for r in unauthorized:
+        login_as(client, app, f'user_{r}')
+        res = client.get('/dashboard')
+        assert res.status_code == 200
+        html = res.data.decode('utf-8')
+        # Sidebar should not contain the Accounting section button/links for unauthorized roles
+        assert '>Accounting<' not in html and 'data-tooltip="Accounting Center"' not in html
+        assert 'href="/acctdash"' not in html

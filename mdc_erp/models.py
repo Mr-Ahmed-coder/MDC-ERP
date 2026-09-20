@@ -321,10 +321,12 @@ class Account(db.Model):
 
 class JournalEntry(db.Model):
     id = db.Column(db.Integer, primary_key=True)
+    branch_id = db.Column(db.Integer, db.ForeignKey('branch.id'), nullable=True)
     date = db.Column(db.String(12), default=lambda: dt.date.today().isoformat())
     ref = db.Column(db.String(40))
     memo = db.Column(db.String(200))
     lines = db.relationship('JournalLine', backref='entry', cascade='all,delete')
+    branch = db.relationship('Branch')
     reversed_by = db.Column(db.Integer)     # id of the reversing entry
     is_reversal = db.Column(db.Boolean, default=False)
     reverses_id = db.Column(db.Integer)     # on a reversal: id of the entry it reverses

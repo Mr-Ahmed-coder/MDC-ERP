@@ -31,10 +31,7 @@ _TABS = [('gldash', 'Dashboard'), ('genledger', 'General Ledger'),
 
 
 def _subnav(active):
-    tabs = ''.join(
-        f"<a class='{'on' if k == active else ''}' href='{url_for('modules.module', mod=k)}'>{h(lbl)}</a>"
-        for k, lbl in _TABS)
-    return f"<div class='subnav' style='margin-bottom:14px'><span class='subnav-t'>General Ledger</span>{tabs}</div>"
+    return ""
 
 
 # --------------------------------------------------------------- date helpers

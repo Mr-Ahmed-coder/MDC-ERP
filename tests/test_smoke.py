@@ -49,6 +49,8 @@ def _seed_template():
         # main .db file so the per-test shutil.copy() below captures everything.
         _db.session.execute(_text('PRAGMA wal_checkpoint(TRUNCATE)'))
         _db.session.commit()
+        _db.session.remove()
+        _db.engine.dispose()
     yield
     if os.path.exists(_TEMPLATE):
         os.remove(_TEMPLATE)
@@ -285,7 +287,7 @@ def test_returning_patient_reused_no_duplicate(app, client):
     tok = _csrf(client.get('/m/referrals'))
     client.post('/refer', data={'patient_id': str(pid), 'patient_name': 'Faadumo Xasan',
                                 'patient_phone': '0615123123', 'doctor_id': str(did),
-                                'tests': ['Blood Sugar'], '_csrf': tok}, follow_redirects=True)
+                                'tests': ['Blood Sugar'], 'notes': 'Routine screening', '_csrf': tok}, follow_redirects=True)
     with app.app_context():
         ref = Referral.query.order_by(Referral.id.desc()).first()
         assert ref.patient_id == pid                       # linked, not new
@@ -300,7 +302,8 @@ def test_returning_patient_reused_no_duplicate(app, client):
     tok = _csrf(client.get('/m/referrals'))
     client.post('/refer', data={'patient_name': 'Someone Else Typed',
                                 'patient_phone': '0615123123',  # same phone as Faadumo
-                                'doctor_id': str(did), 'tests': ['Blood Sugar'], '_csrf': tok},
+                                'patient_age': '30', 'patient_gender': 'Female',
+                                'doctor_id': str(did), 'tests': ['Blood Sugar'], 'notes': 'Follow up', '_csrf': tok},
                 follow_redirects=True)
     with app.app_context():
         ref2 = Referral.query.order_by(Referral.id.desc()).first()
@@ -321,7 +324,8 @@ def test_public_referral_form(app):
     c = app.test_client()
     tok = _csrf(c.get('/refer'))
     r = c.post('/refer', data={'doctor_id': '1', 'patient_name': 'Portal Test',
-                               'patient_phone': '615999', 'tests': ['Blood Sugar'],
+                               'patient_phone': '615999', 'patient_age': '25', 'patient_gender': 'Male',
+                               'tests': ['Blood Sugar'], 'notes': 'Portal referral notes',
                                '_csrf': tok}, follow_redirects=True)
     assert r.status_code == 200
 
@@ -2438,7 +2442,9 @@ def test_doctor_request_workflow_merged(app, client):
     tok = _csrf(client.get('/referral/new'))
     from mdc_erp.models import Referral
     client.post('/refer', data={'patient_name': 'WF Test', 'patient_phone': '0611',
-                                'doctor_name': 'Dr WF', 'tests': ['CBC'], '_csrf': tok},
+                                'patient_age': '40', 'patient_gender': 'Male',
+                                'doctor_name': 'Dr WF', 'hospital': 'MDC Clinic',
+                                'tests': ['CBC'], 'notes': 'WF test notes', '_csrf': tok},
                 follow_redirects=True)
     with app.app_context():
         assert Referral.query.filter_by(patient_name='WF Test').first() is not None
@@ -2709,7 +2715,9 @@ def test_billing_waiting_panel_and_one_click_invoice(app, client):
     # doctor request with a catalog service
     tok = _csrf(client.get('/referral/new'))
     client.post('/refer', data={'patient_name': 'Bilal T34', 'patient_phone': '0616',
-                                'doctor_name': 'Dr B', 'tests': [svc_name], '_csrf': tok},
+                                'patient_age': '35', 'patient_gender': 'Male',
+                                'doctor_name': 'Dr B', 'hospital': 'City Clinic',
+                                'tests': [svc_name], 'notes': 'Bilal notes', '_csrf': tok},
                 follow_redirects=True)
     with app.app_context():
         rid = Referral.query.filter_by(patient_name='Bilal T34').first().id
@@ -2799,8 +2807,10 @@ def test_invoice_auto_no_manual_additem(app, client):
     with app.app_context():
         svc_name = Service.query.first().name
     tok = _csrf(client.get('/referral/new'))
-    client.post('/refer', data={'patient_name': 'Auto T36', 'doctor_name': 'Dr A',
-                                'tests': [svc_name], '_csrf': tok}, follow_redirects=True)
+    client.post('/refer', data={'patient_name': 'Auto T36', 'patient_phone': '0617',
+                                'patient_age': '28', 'patient_gender': 'Female',
+                                'doctor_name': 'Dr A', 'hospital': 'General Hospital',
+                                'tests': [svc_name], 'notes': 'Auto T36 notes', '_csrf': tok}, follow_redirects=True)
     with app.app_context():
         rid = Referral.query.filter_by(patient_name='Auto T36').first().id
     client.get(f'/referral/{rid}/accept', follow_redirects=True)

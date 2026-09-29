@@ -233,26 +233,27 @@ body.dark .stmt .sec{color:var(--teal)}
 .subnav a{padding:8px 15px;border-radius:8px;font-weight:600;font-size:13px;color:var(--muted);text-decoration:none}
 .subnav a:hover{background:var(--canvas);color:var(--ink)}
 .subnav a.on{background:var(--petrol);color:#fff}
-/* ---- Accounting 8-Group Menubar ---- */
+/* ---- Shared grouped application menubar ---- */
 .mbar-desktop{display:flex;align-items:center;gap:4px;background:var(--petrol);border-radius:12px;padding:5px 10px;margin-bottom:18px;flex-wrap:nowrap;box-shadow:var(--shadow);position:relative;z-index:50}
 .mb-top{display:inline-flex;align-items:center;gap:5px;padding:8px 12px;color:#CFE0E4;font-weight:600;font-size:13px;border-radius:8px;cursor:pointer;text-decoration:none;white-space:nowrap;background:transparent;border:none;transition:all .15s ease}
 .mb-item{position:relative}
-.mb-item:hover .mb-top,.mb-item.open .mb-top,.mb-top:hover{background:rgba(255,255,255,.14);color:#fff}
+.mb-item.open .mb-top,.mb-top:hover{background:rgba(255,255,255,.14);color:#fff}
 .mb-top.on{background:var(--amber);color:var(--petrol-700,#0B2E35)!important;font-weight:700}
 .mb-top.on:hover{background:var(--amber);color:var(--petrol-700,#0B2E35)}
 .mb-chev{transition:transform .15s ease;opacity:.85}
 .mb-item.open .mb-chev{transform:rotate(180deg)}
 .mb-drop{display:none;position:absolute;top:calc(100% + 4px);left:0;min-width:210px;background:var(--surface);border:1px solid var(--line);border-radius:10px;box-shadow:0 12px 28px rgba(11,46,53,.22);padding:6px;z-index:60;max-height:70vh;overflow-y:auto}
-.mb-item:hover .mb-drop,.mb-item.open .mb-drop{display:block}
+.mb-item.open .mb-drop{display:block}
 .mb-drop a{display:block;padding:8px 12px;border-radius:7px;color:var(--ink);font-size:13px;font-weight:500;text-decoration:none;white-space:nowrap;transition:background .15s ease}
 .mb-drop a:hover{background:var(--canvas);color:var(--petrol)}
 .mb-drop a.on{background:var(--petrol);color:#fff;font-weight:600}
 
-/* Mobile Accounting Selector (<860px) */
+/* Mobile grouped selector (<860px) */
 .mbar-mobile-wrap{display:none;margin-bottom:18px;position:relative;z-index:50}
 .mbar-mobile-btn{width:100%;display:flex;align-items:center;justify-content:space-between;background:var(--petrol);color:#fff;padding:10px 14px;border-radius:10px;font-weight:600;font-size:13.5px;border:none;cursor:pointer}
 .mbar-mobile-drawer{display:none;background:var(--surface);border:1px solid var(--line);border-radius:10px;margin-top:6px;padding:8px;box-shadow:var(--shadow)}
 .mbar-mobile-drawer.open{display:block}
+.mbar-mobile-btn[aria-expanded="true"] .mb-chev{transform:rotate(180deg)}
 .mbar-mobile-group-ttl{font-size:11px;font-weight:700;color:var(--petrol);text-transform:uppercase;letter-spacing:.5px;padding:8px 10px 4px;margin-top:4px}
 .mbar-mobile-group-ttl:first-child{margin-top:0}
 .mbar-mobile-drawer a{display:block;padding:8px 12px;border-radius:6px;color:var(--ink);font-size:13px;text-decoration:none;font-weight:500}
@@ -560,7 +561,7 @@ NAVDEF = [
  ("Accounting", [
     ("acctdash", "Accounting Center", "M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M6 2h12a2 2 0 012 2v16a2 2 0 01-2 2H6a2 2 0 01-2-2V4a2 2 0 012-2z"),
     ("genledger", "General Ledger", "M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"),
-    ("coa", "Chart of Accounts", "M4 6h16M4 10h16M4 14h16M4 18h16"),
+    ("accounts", "Chart of Accounts", "M4 6h16M4 10h16M4 14h16M4 18h16"),
     ("jentries", "Journal Entries", "M8 2h8a2 2 0 012 2v16l-6-3-6 3V4a2 2 0 012-2z"),
     ("finance", "Financial Statements", "M4 4v16h16M8 16l3-4 3 3 4-6"),
     ("bankrec", "Bank Reconciliation", "M3 10h18M7 15h4M4 4h16v16H4z"),
@@ -591,7 +592,7 @@ NAVDEF = [
 ]
 
 GROUPS = {
- 'billing':    ('Billing & Cashier', [('invoices','Invoices'),('dailytx','Daily Transactions'),('payalloc','Receive Payment'),('dailytx','Daily Transactions'),('creditnotes','Credit Notes'),('cashclose','Daily Cash Closing'),('commission','Doctor Commission'),('services','Service Catalog')]),
+ 'billing':    ('Billing & Cashier', [('invoices','Invoices'),('payalloc','Receive Payment'),('dailytx','Daily Transactions'),('creditnotes','Credit Notes'),('cashclose','Daily Cash Closing'),('commission','Doctor Commission'),('services','Service Catalog'),('paycenter','Pay Center')]),
  'inventory':  ('Inventory',  [('suppliers','Suppliers'),('inventory','Supplies'),('purchases','Purchase Orders'),('debitnotes','Debit Notes'),('warehouses','Warehouses'),('transfers','Stock Transfers'),('stockadj','Stock Adjustments'),('consumption','Consumption Report')]),
  'accounting': ('Accounting', [('acct','Dashboard'),('findash','Financial Dashboard'),('payables','Commission Payables'),('accounts','Chart of Accounts'),('journal','Journal Entries'),('recurjournals','Recurring Journals'),('genledger','General Ledger'),('partnerledger','Partner Ledger'),('expenses','Expenses'),('cashflow','Cash Flow'),('araging','AR Aging'),('apaging','AP Aging'),('banks','Bank Accounts'),('bankrecon','Bank Reconciliation'),('budgets','Budgets'),('budgetreport','Budget vs Actual'),('costcenters','Cost Centers'),('ccreport','Cost Center Report'),('ratios','Financial Ratios'),('revreport','Revenue Analysis'),('taxreport','Tax Report'),('fiscal','Fiscal Periods'),('currencies','Currencies'),('finance','Financial Statements')]),
  'hr':         ('Human Resources', [('employees','Employees'),('attendance','Attendance'),('leave','Leave'),('payroll','Payroll'),('advances','Salary Advances'),('loans','Employee Loans')]),
@@ -880,7 +881,7 @@ def nav_html(active):
     ag = KEY2GROUP.get(active)
     is_acct_active = (active in ('acctdash', 'acct', 'findash', 'genledger', 'coa', 'accounts', 'jentries', 'journal', 'finance', 'pnl', 'balance_sheet', 'cashflow', 'bankrec')
                       or ag == 'accounting'
-                      or (request and (request.path.startswith('/acctdash') or request.path.startswith('/gl') or request.path.startswith('/journal') or request.path.startswith('/coa'))))
+                      or (request and (request.path.startswith('/acctdash') or request.path.startswith('/gl') or request.path.startswith('/journal') or request.path.startswith('/coa') or request.path.startswith('/m/accounts'))))
     first_group = NAVDEF[0][0] if NAVDEF else None
     out = []
     for group, items in NAVDEF:
@@ -896,7 +897,7 @@ def nav_html(active):
                 if not can(key):
                     continue
                 href = url_for('dash.dashboard') if key=='dashboard' else url_for('modules.module', mod=key)
-                is_active = (key == active or (key == 'coa' and active == 'accounts') or (key == 'jentries' and active == 'journal'))
+                is_active = (key == active or (key in ('coa', 'accounts') and active in ('accounts', 'coa')) or (key == 'jentries' and active in ('jentries', 'journal')))
             elif g := KEY2GROUP.get(key):
                 subs = [k for k,_ in GROUPS[g][1] if can(k)]
                 if not subs: continue
@@ -921,6 +922,52 @@ def nav_html(active):
                        f"<span>{h(group)}</span>{chev_svg}</button>"
                        f"<div class='navsub'>{''.join(rendered)}</div></div>")
     return ''.join(out)
+
+BILLING_MENUBAR = [
+    ("Billing & Cashier", "invoices", [
+        ("invoices", "Billing & Cashier"),
+    ]),
+    ("Invoicing", "invoices", [
+        ("invoices", "Invoices"),
+        ("creditnotes", "Credit Notes"),
+        ("services", "Service Catalog"),
+    ]),
+    ("Payments & Cashier", "payalloc", [
+        ("payalloc", "Receive Payment"),
+        ("dailytx", "Daily Transactions"),
+        ("cashclose", "Daily Cash Closing"),
+        ("paycenter", "Pay Center"),
+    ]),
+    ("Commissions", "commission", [
+        ("commission", "Doctor Commission"),
+        ("payables", "Commission Payables"),
+    ]),
+]
+
+BILLING_KEYS = {key for _label, _default, items in BILLING_MENUBAR for key, _item_label in items}
+
+
+def _can_billing(key):
+    return can(key)
+
+
+def _is_active_billing_key(item_key, active):
+    if item_key == active:
+        return True
+    aliases = {
+        'invoices': {'invoices', 'billing', 'invoice_view', 'invoice_new'},
+        'creditnotes': {'creditnotes', 'creditnote_new'},
+        'payalloc': {'payalloc', 'pay'},
+        'dailytx': {'dailytx', 'tx'},
+        'cashclose': {'cashclose', 'cash_close'},
+        'commission': {'commission', 'radfees'},
+        'paycenter': {'paycenter'},
+        'payables': {'payables'},
+        'services': {'services', 'svcmgmt'},
+    }
+    return active in aliases.get(item_key, set())
+
+
 
 ACCT_MENUBAR = [
     ("Overview", "acctdash", [
@@ -1036,45 +1083,49 @@ def _acct_url(key):
         return f"/{key}"
 
 
-def _acct_menubar(active):
+def _grouped_menubar(active, structure, menu_name, permission_check, url_builder, active_check):
+    """Render the shared desktop dropdown and mobile drawer navigation."""
     desktop_items = []
     mobile_groups = []
-    active_label = "Accounting Center"
+    active_label = menu_name
+    menu_id = ''.join(ch.lower() if ch.isalnum() else '-' for ch in menu_name).strip('-')
 
     chev_svg = ('<svg class="mb-chev" width="12" height="12" viewBox="0 0 24 24" fill="none" '
                 'stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">'
                 '<polyline points="6 9 12 15 18 9"></polyline></svg>')
 
-    for top_label, default_key, subs in ACCT_MENUBAR:
-        vis_subs = [(k, lbl) for k, lbl in subs if _can_acct(k)]
+    for group_index, (top_label, default_key, subs) in enumerate(structure):
+        vis_subs = [(k, lbl) for k, lbl in subs if permission_check(k)]
         if not vis_subs:
             continue
 
-        group_is_on = any(_is_active_key(k, active) for k, _ in vis_subs)
+        group_is_on = any(active_check(k, active) for k, _ in vis_subs)
 
-        if top_label == "Overview" or (len(subs) == 1 and subs[0][0] == 'acctdash'):
+        if len(subs) == 1:
             k, lbl = vis_subs[0]
             if group_is_on:
                 active_label = lbl
             is_on = "on" if group_is_on else ""
-            desktop_items.append(f'<a class="mb-top {is_on}" href="{_acct_url(k)}">{h(top_label)}</a>')
-            mobile_groups.append(f'<div class="mbar-mobile-group"><a class="mbar-mobile-link {is_on}" href="{_acct_url(k)}">{h(lbl)}</a></div>')
+            desktop_items.append(f'<a class="mb-top {is_on}" href="{url_builder(k)}">{h(top_label)}</a>')
+            mobile_groups.append(f'<div class="mbar-mobile-group"><a class="mbar-mobile-link {is_on}" href="{url_builder(k)}">{h(lbl)}</a></div>')
         else:
             drop_links = []
             mobile_links = []
             for k, lbl in vis_subs:
-                item_is_on = _is_active_key(k, active)
+                item_is_on = active_check(k, active)
                 if item_is_on:
                     active_label = lbl
                 on_cls = "on" if item_is_on else ""
-                drop_links.append(f'<a class="{on_cls}" href="{_acct_url(k)}">{h(lbl)}</a>')
-                mobile_links.append(f'<a class="mbar-mobile-link {on_cls}" href="{_acct_url(k)}">{h(lbl)}</a>')
+                drop_links.append(f'<a class="{on_cls}" role="menuitem" data-nav-key="{h(k)}" href="{url_builder(k)}">{h(lbl)}</a>')
+                mobile_links.append(f'<a class="mbar-mobile-link {on_cls}" data-nav-key="{h(k)}" href="{url_builder(k)}">{h(lbl)}</a>')
 
             group_on_cls = "on" if group_is_on else ""
+            drop_id = f'{menu_id}-drop-{group_index}'
             desktop_items.append(
                 f'<div class="mb-item">'
-                f'<button type="button" class="mb-top {group_on_cls}">{h(top_label)} {chev_svg}</button>'
-                f'<div class="mb-drop">{"".join(drop_links)}</div>'
+                f'<button type="button" class="mb-top {group_on_cls}" aria-expanded="false" '
+                f'aria-haspopup="menu" aria-controls="{drop_id}">{h(top_label)} {chev_svg}</button>'
+                f'<div class="mb-drop" id="{drop_id}" role="menu">{"".join(drop_links)}</div>'
                 f'</div>'
             )
             mobile_groups.append(
@@ -1090,50 +1141,67 @@ def _acct_menubar(active):
     js_script = (
         "<script>\n"
         "(function(){\n"
+        "  function setItem(item, open){\n"
+        "    item.classList.toggle('open', open);\n"
+        "    var btn=item.querySelector('.mb-top'); if(btn) btn.setAttribute('aria-expanded', open?'true':'false');\n"
+        "  }\n"
+        "  function closeDesktop(except){\n"
+        "    document.querySelectorAll('.mbar-desktop .mb-item').forEach(function(i){ if(i!==except) setItem(i,false); });\n"
+        "  }\n"
         "  document.addEventListener('click', function(e){\n"
-        "    var mbar = document.querySelector('.mbar-desktop');\n"
-        "    if(!mbar) return;\n"
-        "    var item = e.target.closest('.mb-item');\n"
-        "    if(item && mbar.contains(item)){\n"
-        "      var topBtn = e.target.closest('.mb-top');\n"
-        "      if(topBtn){\n"
-        "        var isOpen = item.classList.contains('open');\n"
-        "        mbar.querySelectorAll('.mb-item').forEach(function(i){ i.classList.remove('open'); });\n"
-        "        if(!isOpen) item.classList.add('open');\n"
-        "        e.stopPropagation();\n"
-        "      }\n"
-        "    }else{\n"
-        "      mbar.querySelectorAll('.mb-item').forEach(function(i){ i.classList.remove('open'); });\n"
+        "    var topBtn=e.target.closest('.mbar-desktop .mb-item > .mb-top');\n"
+        "    if(topBtn){\n"
+        "      var item=topBtn.parentNode, willOpen=!item.classList.contains('open');\n"
+        "      closeDesktop(item); setItem(item,willOpen); e.stopPropagation();\n"
+        "    }else if(!e.target.closest('.mbar-desktop')){ closeDesktop(); }\n"
+        "    var mobileBtn=e.target.closest('.mbar-mobile-btn');\n"
+        "    if(mobileBtn){\n"
+        "      var drawer=mobileBtn.nextElementSibling, open=!drawer.classList.contains('open');\n"
+        "      drawer.classList.toggle('open',open); mobileBtn.setAttribute('aria-expanded',open?'true':'false'); e.stopPropagation();\n"
         "    }\n"
         "    var mwrap = document.querySelector('.mbar-mobile-wrap');\n"
         "    if(mwrap && !mwrap.contains(e.target)){\n"
         "      var mdrawer = mwrap.querySelector('.mbar-mobile-drawer');\n"
         "      if(mdrawer) mdrawer.classList.remove('open');\n"
+        "      var mbtn=mwrap.querySelector('.mbar-mobile-btn'); if(mbtn) mbtn.setAttribute('aria-expanded','false');\n"
         "    }\n"
         "  });\n"
         "  document.addEventListener('keydown', function(e){\n"
+        "    var btn=e.target.closest('.mbar-desktop .mb-item > .mb-top');\n"
+        "    if(btn && e.key==='ArrowDown'){ e.preventDefault(); var item=btn.parentNode; closeDesktop(item); setItem(item,true); var first=item.querySelector('.mb-drop a'); if(first) first.focus(); return; }\n"
         "    if(e.key === 'Escape'){\n"
-        "      document.querySelectorAll('.mb-item.open').forEach(function(i){ i.classList.remove('open'); });\n"
+        "      var opened=e.target.closest('.mb-item.open'); closeDesktop(); if(opened){ var opener=opened.querySelector('.mb-top'); if(opener) opener.focus(); }\n"
         "      var mdrawer = document.querySelector('.mbar-mobile-drawer.open');\n"
-        "      if(mdrawer) mdrawer.classList.remove('open');\n"
+        "      if(mdrawer){ mdrawer.classList.remove('open'); var mbtn=mdrawer.previousElementSibling; if(mbtn){mbtn.setAttribute('aria-expanded','false');mbtn.focus();} }\n"
         "    }\n"
         "  });\n"
         "})();\n"
         "</script>"
     )
 
-    desktop_html = f'<div class="mbar-desktop">{"".join(desktop_items)}</div>'
+    desktop_html = f'<nav class="mbar-desktop" data-menu="{menu_id}" aria-label="{h(menu_name)} navigation">{"".join(desktop_items)}</nav>'
+    drawer_id = f'{menu_id}-mobile-drawer'
     mobile_html = (
         f'<div class="mbar-mobile-wrap">'
-        f'<button type="button" class="mbar-mobile-btn" onclick="this.nextElementSibling.classList.toggle(\'open\')">'
-        f'<span>Accounting: {h(active_label)}</span>'
+        f'<button type="button" class="mbar-mobile-btn" aria-expanded="false" aria-controls="{drawer_id}">'
+        f'<span>{h(menu_name)} Menu: {h(active_label)}</span>'
         f'{chev_svg}'
         f'</button>'
-        f'<div class="mbar-mobile-drawer">{"".join(mobile_groups)}</div>'
+        f'<div class="mbar-mobile-drawer" id="{drawer_id}">{"".join(mobile_groups)}</div>'
         f'</div>'
     )
 
     return f'{desktop_html}{mobile_html}{js_script}'
+
+
+def _acct_menubar(active):
+    return _grouped_menubar(active, ACCT_MENUBAR, "Accounting", _can_acct, _acct_url, _is_active_key)
+
+
+def _billing_menubar(active):
+    return _grouped_menubar(active, BILLING_MENUBAR, "Billing", _can_billing,
+                            lambda key: url_for('modules.module', mod=key),
+                            _is_active_billing_key)
 
 
 def _menubar(active, structure):
@@ -1288,6 +1356,8 @@ BAR_TRIGGER = {k: app for app, bar in APP_BARS.items()
 
 def subnav_html(active):
     """Compact page-level tabs for module-specific sub-navigation."""
+    if active in BILLING_KEYS:
+        return _billing_menubar(active)
     if active in ACCT_BAR_TRIGGER or active in ACCT_KEYS or KEY2GROUP.get(active) == 'accounting':
         return _acct_menubar(active)
     app = BAR_TRIGGER.get(active)

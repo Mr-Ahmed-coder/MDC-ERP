@@ -155,3 +155,43 @@ def test_auditor_readonly_and_clinical_denied(app):
     if lt is not None:
         assert b'No access' in lt.get('/m/acctdash').data
         assert lt.get('/acctdash/export.xlsx').status_code == 403
+
+
+def test_journal_entry_branch_id_schema_and_acctdash_health(app):
+    with app.app_context():
+        from mdc_erp.extensions import db
+        import sqlalchemy as sa
+        inspector = sa.inspect(db.engine)
+        cols = [c['name'] for c in inspector.get_columns('journal_entry')]
+        assert 'branch_id' in cols, "journal_entry table must contain branch_id column"
+    c = _client(app, 'super_admin')
+    res = c.get('/acctdash')
+    assert res.status_code == 200
+
+
+def test_accounting_sidebar_navigation_links(app):
+    """Verify all Accounting sidebar links return 200 OK and Chart of Accounts opens /m/accounts without 404."""
+    c = _client(app, 'super_admin')
+
+    # 1. Inspect sidebar HTML on dashboard
+    d = c.get('/acctdash').get_data(as_text=True)
+    assert 'ACCOUNTING' in d or 'Accounting' in d
+    assert '/m/accounts' in d, "Chart of Accounts must link to /m/accounts"
+    assert '/m/coa' not in d, "Chart of Accounts must not link to obsolete /m/coa"
+
+    # 2. Iterate through all 6 Accounting sidebar endpoints
+    destinations = [
+        ('/acctdash', 'Accounting Center'),
+        ('/m/genledger', 'General Ledger'),
+        ('/m/accounts', 'Chart of Accounts'),
+        ('/m/jentries', 'Journal Entries'),
+        ('/m/finance', 'Financial Statements'),
+        ('/m/bankrec', 'Bank Reconciliation'),
+    ]
+
+    for path, title in destinations:
+        res = c.get(path)
+        assert res.status_code == 200, f"Sidebar destination {title} at {path} returned status {res.status_code}"
+        html = res.get_data(as_text=True)
+        assert 'active' in html, f"Active sidebar state should be highlighted for {title} at {path}"
+        assert 'No access' not in html

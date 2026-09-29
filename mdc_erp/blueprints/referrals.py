@@ -103,67 +103,510 @@ def _referral_services(r):
             seen.add(match.id)
     return out
 
+def _render_referral_form_html(errors=None, values=None, is_staff=False):
+    from ..core.security import csrf_token
+    errors = errors or {}
+    values = values or {}
+
+    docs = Doctor.query.filter_by(active=True).order_by(Doctor.name).all()
+    cur_doc_id = str(values.get('doctor_id') or '')
+    dopts = f"<option value='' {'selected' if not cur_doc_id else ''}>— Other (type name below) —</option>" + "".join(
+        f"<option value='{d.id}' {'selected' if str(d.id)==cur_doc_id else ''}>{h(d.name)}{(' · '+h(d.specialty)) if d.specialty else ''}</option>" for d in docs)
+
+    svcs = Service.query.filter_by(active=True).order_by(Service.department, Service.name).all()
+
+    val_tests = values.get('tests') or []
+    if isinstance(val_tests, str):
+        val_tests = [val_tests]
+
+    lines_html = ""
+    for t_item in val_tests:
+        t_clean = h(str(t_item).strip())
+        if t_clean:
+            lines_html += (
+                f"<div style='display:flex;align-items:center;gap:8px;padding:8px 10px;border:1px solid var(--line);border-radius:8px;margin-bottom:6px;background:var(--surface)'>"
+                f"<span style='flex:1'><b>{t_clean}</b></span>"
+                f"<input type='hidden' name='tests' value=\"{t_clean}\">"
+                f"<button type='button' class='btn sm' onclick='this.parentNode.remove()' title='Remove'>✕</button>"
+                f"</div>"
+            )
+
+    if not svcs:
+        picker_html = "<span style='color:var(--muted);font-size:13px'>No services configured yet.</span>"
+    else:
+        groups = {}
+        for s in svcs:
+            groups.setdefault(s.department or 'Other', []).append(s)
+        optgroups = ''
+        for dep, items in groups.items():
+            opts = ''.join(f"<option value=\"{h(s.name)}\">{h(s.name)}</option>" for s in items)
+            optgroups += f"<optgroup label=\"{h(dep)}\">{opts}</optgroup>"
+        picker_html = (
+            f"<div id='tp-lines'>{lines_html}</div>"
+            "<div style='display:flex;gap:8px;align-items:center;margin-top:6px'>"
+            "<select id='tp-pick' style='flex:1;border:1px solid var(--line);border-radius:8px;padding:9px;background:var(--surface)'>"
+            "<option value=''>— Choose category &amp; test… —</option>" + optgroups +
+            "</select>"
+            "<button type='button' class='btn primary' onclick='tpAdd()'>➕ Add a line</button>"
+            "</div>"
+            "<div style='color:var(--muted);font-size:12px;margin-top:5px'>Ku dar adeeg kasta oo dhakhtarku rabo — add one line per test.</div>"
+        )
+        picker_js = """<script>
+        function tpAdd(){
+          var sel=document.getElementById('tp-pick'), v=sel.value; if(!v) return;
+          var lines=document.getElementById('tp-lines');
+          var dup=[].slice.call(lines.querySelectorAll('input[name=tests]')).some(function(i){return i.value===v});
+          if(dup){ sel.value=''; return; }
+          var dep=(sel.options[sel.selectedIndex].parentNode.label)||'';
+          var row=document.createElement('div');
+          row.style.cssText='display:flex;align-items:center;gap:8px;padding:8px 10px;border:1px solid var(--line);border-radius:8px;margin-bottom:6px;background:var(--surface)';
+          var span=document.createElement('span'); span.style.flex='1';
+          var b=document.createElement('b'); b.textContent=v; span.appendChild(b);
+          if(dep){ var sm=document.createElement('small'); sm.style.color='var(--muted)'; sm.textContent=' · '+dep; span.appendChild(sm); }
+          var inp=document.createElement('input'); inp.type='hidden'; inp.name='tests'; inp.value=v;
+          var rm=document.createElement('button'); rm.type='button'; rm.className='btn sm'; rm.textContent='✕'; rm.title='Remove';
+          rm.onclick=function(){ row.remove(); };
+          row.appendChild(span); row.appendChild(inp); row.appendChild(rm);
+          lines.appendChild(row); sel.value='';
+        }
+        document.addEventListener('DOMContentLoaded',function(){
+          var p=document.getElementById('tp-pick');
+          if(p) p.addEventListener('change',function(){ if(this.value) tpAdd(); });
+        });
+        </script>"""
+        picker_html += picker_js
+
+    val_doc_name = h(values.get('doctor_name') or '')
+    val_hospital = h(values.get('hospital') or '')
+    val_pid = h(str(values.get('patient_id') or ''))
+    val_pname = h(values.get('patient_name') or '')
+    val_phone = h(values.get('patient_phone') or '')
+    val_age = h(str(values.get('patient_age') if values.get('patient_age') is not None else ''))
+    val_gender = values.get('patient_gender') or ''
+    val_other_tests = h(values.get('other_tests') or '')
+    val_notes = h(values.get('notes') or '')
+
+    summary_html = ""
+    if errors:
+        err_items = "".join(f"<li>{h(msg)}</li>" for msg in errors.values())
+        summary_html = (
+            f"<div class='panel' id='error-summary' tabIndex='-1' style='border-left:4px solid var(--red);background:var(--red-soft);margin-bottom:16px'>"
+            f"<div class='pad'>"
+            f"<div style='font-weight:700;color:var(--red);font-size:14px;margin-bottom:6px'>⚠️ Please fix the following errors before submitting:</div>"
+            f"<ul style='margin-left:20px;color:var(--ink);font-size:13px'>{err_items}</ul>"
+            f"</div></div>"
+        )
+
+    def err_div(key):
+        if key in errors:
+            return f"<div class='field-error-msg' style='color:var(--red);font-size:12px;font-weight:600;margin-top:4px'>⚠️ {h(errors[key])}</div>"
+        return ""
+
+    def field_sty(key):
+        return "border:1px solid var(--red);" if key in errors else ""
+
+    def field_cls(key):
+        return "is-invalid" if key in errors else ""
+
+    _gopts = "".join(f"<option {'selected' if val_gender==g else ''}>{g}</option>" for g in ('Male', 'Female'))
+
+    form = f"""
+    {summary_html}
+    <div class='panel'><div class='pad'>
+      {"<p style='color:var(--muted);font-size:13px;margin-bottom:6px'>Buuxi foomkan si aad bukaan ugu soo dirto xarunta baaritaanka. (Login uma baahna.)</p>" if not is_staff else ""}
+      <form method='post' action='/refer' onsubmit='return validateDoctorRequestForm(this)'>
+      <input type='hidden' name='_csrf' value='{csrf_token()}'>
+      <div class='secttl'>Referring Doctor · Dhakhtarka gudbiya</div>
+      <div class='fld'>
+        <label>Select registered doctor</label>
+        <select name='doctor_id' class='{field_cls("doctor_id")}' style='{field_sty("doctor_id")}'>{dopts}</select>
+        {err_div("doctor_id")}
+      </div>
+      <div class='g2'>
+        <div class='fld'>
+          <label>Doctor name <span style='color:var(--muted);font-weight:400'>(required if not listed)</span> <span style='color:var(--red)'>*</span></label>
+          <input name='doctor_name' value="{val_doc_name}" class='{field_cls("doctor_name")}' style='{field_sty("doctor_name")}'>
+          {err_div("doctor_name")}
+        </div>
+        <div class='fld'>
+          <label>Hospital / Clinic <span style='color:var(--muted);font-weight:400'>(required for external doctor)</span> <span style='color:var(--red)'>*</span></label>
+          <input name='hospital' value="{val_hospital}" class='{field_cls("hospital")}' style='{field_sty("hospital")}'>
+          {err_div("hospital")}
+        </div>
+      </div>
+      <div class='secttl'>Patient · Bukaanka</div>
+      <input type='hidden' name='patient_id' id='refPid' value="{val_pid}">
+    """
+
+    if is_staff:
+        form += f"""
+        <div class='fld' style='position:relative'>
+          <label>🔎 Find returning patient (ID / name / phone) · Raadi bukaan hore</label>
+          <input id='refPatSearch' autocomplete='off' placeholder='Type MRN, name or phone to reuse an existing patient…'>
+          <div id='refPatResults' style='display:none;position:absolute;z-index:20;left:0;right:0;background:var(--surface);border:1px solid var(--line);border-radius:8px;box-shadow:0 6px 18px rgba(0,0,0,.12);max-height:240px;overflow:auto'></div>
+          <div id='refPatChosen' style='{"display:block" if val_pid else "display:none"};margin-top:6px;font-size:12.5px;color:var(--green)'>
+            {"✓ Using existing patient — no duplicate will be created." if val_pid else ""}
+          </div>
+        </div>
+        """
+
+    form += f"""
+      <div class='g2'>
+        <div class='fld'>
+          <label>Patient name <span style='color:var(--red)'>*</span></label>
+          <input name='patient_name' id='refName' value="{val_pname}" class='{field_cls("patient_name")}' style='{field_sty("patient_name")}' required aria-required='true'>
+          {err_div("patient_name")}
+        </div>
+        <div class='fld'>
+          <label>Phone <span style='color:var(--red)'>*</span></label>
+          <input name='patient_phone' id='refPhone' value="{val_phone}" class='{field_cls("patient_phone")}' style='{field_sty("patient_phone")}'>
+          {err_div("patient_phone")}
+        </div>
+        <div class='fld'>
+          <label>Age <span style='color:var(--red)'>*</span></label>
+          <input name='patient_age' id='refAge' value="{val_age}" class='{field_cls("patient_age")}' style='{field_sty("patient_age")}'>
+          {err_div("patient_age")}
+        </div>
+        <div class='fld'>
+          <label>Gender <span style='color:var(--red)'>*</span></label>
+          <select name='patient_gender' id='refGender' class='{field_cls("patient_gender")}' style='{field_sty("patient_gender")}'>
+            <option value=''>—</option>
+            {_gopts}
+          </select>
+          {err_div("patient_gender")}
+        </div>
+      </div>
+      <div class='secttl'>Requested Tests / Scans · Baaritaannada <span style='color:var(--red)'>*</span></div>
+      {picker_html}
+      {err_div("tests")}
+      <div class='fld' style='margin-top:8px'>
+        <label>Other tests <span style='color:var(--muted);font-weight:400'>(required if no configured services selected)</span></label>
+        <input name='other_tests' value="{val_other_tests}" placeholder='e.g. MRI Brain' class='{field_cls("other_tests")}' style='{field_sty("other_tests")}'>
+        {err_div("other_tests")}
+      </div>
+      <div class='fld'>
+        <label>Clinical notes <span style='color:var(--red)'>*</span></label>
+        <textarea name='notes' rows='2' placeholder='Reason for referral, symptoms...' class='{field_cls("notes")}' style='{field_sty("notes")}' required aria-required='true'>{val_notes}</textarea>
+        {err_div("notes")}
+      </div>
+      <div style='text-align:right;margin-top:14px'>
+        <button type='submit' class='btn primary' style='padding:12px 26px;font-size:15px'>
+          {"Create Doctor Request" if is_staff else "Send Referral"}
+        </button>
+      </div>
+      </form></div></div>
+    """
+
+    js_validation = f"""
+    <script>
+    function validateDoctorRequestForm(form) {{
+      var oldSum = document.getElementById('client-error-summary');
+      if (oldSum) oldSum.remove();
+
+      var oldMsgs = form.querySelectorAll('.client-field-error');
+      oldMsgs.forEach(function(el) {{ el.remove(); }});
+
+      var inputs = form.querySelectorAll('.is-invalid');
+      inputs.forEach(function(el) {{ el.style.borderColor = ''; el.classList.remove('is-invalid'); }});
+
+      var errs = [];
+      var firstErrEl = null;
+
+      function markErr(el, msg) {{
+        errs.push(msg);
+        if (el) {{
+          el.classList.add('is-invalid');
+          el.style.borderColor = 'var(--red)';
+          el.setAttribute('aria-invalid', 'true');
+          var d = document.createElement('div');
+          d.className = 'client-field-error';
+          d.style.cssText = 'color:var(--red);font-size:12px;font-weight:600;margin-top:4px';
+          d.textContent = '⚠️ ' + msg;
+          if (el.parentNode) el.parentNode.appendChild(d);
+          if (!firstErrEl) firstErrEl = el;
+        }}
+      }}
+
+      // Doctor validation
+      var docSel = form.querySelector('[name=doctor_id]');
+      var docName = form.querySelector('[name=doctor_name]');
+      var hosp = form.querySelector('[name=hospital]');
+      if (!docSel || !docSel.value) {{
+        if (!docName || !docName.value.trim()) {{
+          markErr(docName, "Doctor Name is required when 'Other' is selected.");
+        }}
+        if (!hosp || !hosp.value.trim()) {{
+          markErr(hosp, "Hospital / Clinic is required for external doctors.");
+        }}
+      }}
+
+      // Patient validation
+      var pid = form.querySelector('[name=patient_id]');
+      var pName = form.querySelector('[name=patient_name]');
+      var pPhone = form.querySelector('[name=patient_phone]');
+      var pAge = form.querySelector('[name=patient_age]');
+      var pGender = form.querySelector('[name=patient_gender]');
+
+      if (!pid || !pid.value) {{
+        if (!pName || !pName.value.trim()) {{
+          markErr(pName, "Patient Name cannot be blank or contain only spaces.");
+        }}
+        if (!pPhone || !pPhone.value.trim()) {{
+          markErr(pPhone, "Phone number is required for new patients.");
+        }}
+        var ageVal = pAge ? pAge.value.trim() : '';
+        var numAge = Number(ageVal);
+        if (!ageVal || isNaN(ageVal) || !Number.isInteger(numAge) || numAge < 0 || numAge > 150) {{
+          markErr(pAge, "Age must be a valid non-negative integer (0 to 150).");
+        }}
+        if (!pGender || !pGender.value || pGender.value === '—' || pGender.value === '') {{
+          markErr(pGender, "Please select a valid Gender (Male or Female).");
+        }}
+      }}
+
+      // Tests validation
+      var testInputs = form.querySelectorAll('input[name=tests]');
+      var otherTests = form.querySelector('[name=other_tests]');
+      var hasTests = testInputs.length > 0 || (otherTests && otherTests.value.trim().length > 0);
+      if (!hasTests) {{
+        markErr(otherTests || form.querySelector('#tp-pick'), "At least one requested test/scan or 'Other tests' description is required.");
+      }}
+
+      // Clinical notes validation
+      var notes = form.querySelector('[name=notes]');
+      if (!notes || !notes.value.trim()) {{
+        markErr(notes, "Clinical Notes are required and cannot be blank.");
+      }}
+
+      if (errs.length > 0) {{
+        var sumDiv = document.createElement('div');
+        sumDiv.id = 'client-error-summary';
+        sumDiv.className = 'panel';
+        sumDiv.style.cssText = 'border-left:4px solid var(--red);background:var(--red-soft);margin-bottom:16px';
+        var ulHtml = errs.map(function(m) {{ return '<li>' + m + '</li>'; }}).join('');
+        sumDiv.innerHTML = "<div class='pad'>"
+          + "<div style='font-weight:700;color:var(--red);font-size:14px;margin-bottom:6px'>⚠️ Please fix the following errors before submitting:</div>"
+          + "<ul style='margin-left:20px;color:var(--ink);font-size:13px'>" + ulHtml + "</ul></div>";
+
+        form.parentNode.insertBefore(sumDiv, form);
+
+        if (firstErrEl) {{
+          firstErrEl.focus();
+        }}
+        return false;
+      }}
+
+      var btn = form.querySelector('button[type=submit], button.primary');
+      if (btn) {{
+        btn.disabled = true;
+        btn.textContent = 'Submitting...';
+      }}
+      return true;
+    }}
+    </script>
+    """
+
+    if is_staff:
+        search_js = f"""
+        <script>
+        (function(){{
+          var box=document.getElementById('refPatSearch'), res=document.getElementById('refPatResults'),
+              chosen=document.getElementById('refPatChosen'), t=null;
+          function clearPid(){{document.getElementById('refPid').value=''; chosen.style.display='none';}}
+          if(box){{
+            box.addEventListener('input', function(){{
+              clearPid();
+              var q=this.value.trim();
+              if(q.length<2){{res.style.display='none'; return;}}
+              clearTimeout(t);
+              t=setTimeout(function(){{
+                fetch('{url_for('ref.referral_patient_search')}?q='+encodeURIComponent(q))
+                .then(function(r){{return r.json();}}).then(function(list){{
+                  if(!list.length){{res.innerHTML="<div style='padding:8px 12px;color:#888;font-size:12.5px'>No match — a new patient will be created.</div>"; res.style.display='block'; return;}}
+                  res.innerHTML=list.map(function(p){{
+                    return "<div class='refpat' data-id='"+p.id+"' data-name='"+encodeURIComponent(p.name)+"' data-phone='"+encodeURIComponent(p.phone)+"' data-age='"+p.age+"' data-gender='"+p.gender+"' style='padding:8px 12px;cursor:pointer;border-bottom:1px solid #eee'>"
+                      +"<b>"+p.name+"</b> <span style='color:#888;font-size:12px'>· "+p.mrn+" · "+(p.phone||'—')+"</span></div>";
+                  }}).join('');
+                  res.style.display='block';
+                  Array.prototype.forEach.call(res.querySelectorAll('.refpat'), function(el){{
+                    el.addEventListener('mousedown', function(){{
+                      document.getElementById('refPid').value=el.getAttribute('data-id');
+                      document.getElementById('refName').value=decodeURIComponent(el.getAttribute('data-name'));
+                      document.getElementById('refPhone').value=decodeURIComponent(el.getAttribute('data-phone'));
+                      var ag=el.getAttribute('data-age'); document.getElementById('refAge').value=(ag&&ag!=='None'?ag:'');
+                      var g=el.getAttribute('data-gender'); if(g){{document.getElementById('refGender').value=g;}}
+                      chosen.textContent='✓ Using existing patient — no duplicate will be created.'; chosen.style.display='block';
+                      res.style.display='none'; box.value='';
+                    }});
+                  }});
+                }});
+              }}, 220);
+            }});
+            box.addEventListener('blur', function(){{ setTimeout(function(){{res.style.display='none';}}, 200); }});
+          }}
+        }})();
+        </script>
+        """
+        form += search_js
+
+    if errors:
+        focus_js = "<script>document.addEventListener('DOMContentLoaded', function(){ var el = document.querySelector('.is-invalid'); if(el) el.focus(); });</script>"
+        form += focus_js
+
+    return form + js_validation
+
+
 @bp.route('/refer', methods=['GET','POST'])
 def refer():
     if request.method == 'POST':
-        did = request.form.get('doctor_id')
-        chosen = request.form.getlist('tests')
-        other = request.form.get('other_tests')
-        if other: chosen.append(other)
-        # If a returning patient was picked (or matched by phone), link the referral
-        # to that existing record so no duplicate is created downstream.
-        _pid = request.form.get('patient_id')
-        linked_pid = int(_pid) if (_pid and str(_pid).isdigit()) else None
-        _phone = (request.form.get('patient_phone') or '').strip()
-        if not linked_pid and _phone:
-            _ex = Patient.query.filter_by(phone=_phone).first()
-            if _ex:
-                linked_pid = _ex.id
+        if cur_user() and not (can('referrals') or can('reqboard')):
+            abort(403)
+
+        errors = {}
+
+        did_raw = (request.form.get('doctor_id') or '').strip()
+        did = int(did_raw) if did_raw.isdigit() else None
+        doc_name = (request.form.get('doctor_name') or '').strip()
+        hospital = (request.form.get('hospital') or '').strip()
+
+        pid_raw = (request.form.get('patient_id') or '').strip()
+        linked_pid = int(pid_raw) if pid_raw.isdigit() else None
+        pat_name = (request.form.get('patient_name') or '').strip()
+        pat_phone = (request.form.get('patient_phone') or '').strip()
+        pat_age_raw = (request.form.get('patient_age') or '').strip()
+        pat_gender = (request.form.get('patient_gender') or '').strip()
+
+        chosen = [t.strip() for t in request.form.getlist('tests') if t.strip()]
+        other = (request.form.get('other_tests') or '').strip()
+        notes = (request.form.get('notes') or '').strip()
+
+        # Rule A: Referring Doctor
+        if did:
+            doc_obj = Doctor.query.get(did)
+            if not doc_obj or not doc_obj.active:
+                errors['doctor_id'] = "Selected registered doctor is invalid or inactive."
+            else:
+                if not doc_name:
+                    doc_name = doc_obj.name
+        else:
+            if not doc_name:
+                errors['doctor_name'] = "Doctor Name is required when 'Other' is selected."
+            if not hospital:
+                errors['hospital'] = "Hospital / Clinic is required for external doctors."
+
+        # Rule B: Patient
+        if linked_pid:
+            existing_pat = Patient.query.get(linked_pid)
+            if not existing_pat:
+                errors['patient_id'] = "Selected existing patient record was not found."
+            else:
+                pat_name = existing_pat.name or pat_name
+                pat_phone = existing_pat.phone or pat_phone
+                pat_age_raw = str(existing_pat.age) if existing_pat.age is not None else pat_age_raw
+                pat_gender = existing_pat.gender or pat_gender
+        else:
+            if pat_phone:
+                ex_pat = Patient.query.filter_by(phone=pat_phone).first()
+                if ex_pat:
+                    linked_pid = ex_pat.id
+                    pat_name = ex_pat.name or pat_name
+                    pat_phone = ex_pat.phone or pat_phone
+                    pat_age_raw = str(ex_pat.age) if ex_pat.age is not None else pat_age_raw
+                    pat_gender = ex_pat.gender or pat_gender
+
+            if not linked_pid:
+                if not pat_name:
+                    errors['patient_name'] = "Patient Name cannot be blank or contain only spaces."
+                if not pat_phone:
+                    errors['patient_phone'] = "Phone number is required for new patients."
+
+                if not pat_age_raw:
+                    errors['patient_age'] = "Age is required."
+                else:
+                    try:
+                        age_val = int(pat_age_raw)
+                        if age_val < 0 or age_val > 150:
+                            errors['patient_age'] = "Age must be a valid non-negative number (0 to 150)."
+                    except ValueError:
+                        errors['patient_age'] = "Age must be a valid number."
+
+                if not pat_gender or pat_gender not in ('Male', 'Female'):
+                    errors['patient_gender'] = "Please select a valid Gender (Male or Female)."
+
+        # Rule C: Requested Test or Scan
+        all_tests = list(chosen)
+        if other:
+            all_tests.append(other)
+
+        if not all_tests:
+            errors['tests'] = "At least one requested test/scan or 'Other tests' description is required."
+
+        # Rule D: Clinical Notes
+        if not notes:
+            errors['notes'] = "Clinical Notes are required and cannot be blank."
+
+        if errors:
+            db.session.rollback()
+            values = {
+                'doctor_id': did_raw,
+                'doctor_name': doc_name,
+                'hospital': hospital,
+                'patient_id': pid_raw,
+                'patient_name': pat_name,
+                'patient_phone': pat_phone,
+                'patient_age': pat_age_raw,
+                'patient_gender': pat_gender,
+                'tests': chosen,
+                'other_tests': other,
+                'notes': notes,
+            }
+            is_staff_user = bool(cur_user())
+            form_html = _render_referral_form_html(errors=errors, values=values, is_staff=is_staff_user)
+            if is_staff_user:
+                n_new = Referral.query.filter_by(status='New').count()
+                head = (f"<div class='panel'><div class='pad' style='display:flex;align-items:center;gap:12px;flex-wrap:wrap'>"
+                        f"<div><div style='font-weight:700;color:var(--petrol);font-family:Space Grotesk;font-size:16px'>New Doctor Request · Codsi cusub</div>"
+                        f"<div style='color:var(--muted);font-size:12.5px'>Buuxi foomka si aad u abuurto codsi cusub oo dhakhtar.</div></div>"
+                        f"<div class='sp' style='flex:1'></div>"
+                        f"<a class='btn' href='{url_for('modules.module', mod='referrals')}'>← Back to Doctor Requests{f' ({n_new} new)' if n_new else ''}</a></div></div>")
+                return page('Doctor Request', head + form_html, 'referrals'), 400
+            else:
+                return public_shell('Doctor Referral', form_html), 400
+
         r = Referral(
             patient_id=linked_pid,
-            patient_name=request.form.get('patient_name'), patient_phone=request.form.get('patient_phone'),
-            patient_age=request.form.get('patient_age'), patient_gender=request.form.get('patient_gender'),
-            doctor_id=int(did) if did else None, doctor_name=request.form.get('doctor_name'),
-            hospital=request.form.get('hospital'), tests=', '.join([t for t in chosen if t]),
-            notes=request.form.get('notes'), status='New')
-        db.session.add(r); db.session.commit()
+            patient_name=pat_name,
+            patient_phone=pat_phone,
+            patient_age=pat_age_raw,
+            patient_gender=pat_gender,
+            doctor_id=did if did else None,
+            doctor_name=doc_name,
+            hospital=hospital,
+            tests=', '.join([t for t in all_tests if t]),
+            notes=notes,
+            status='New'
+        )
+        db.session.add(r)
+        db.session.commit()
+
         from ..core.notify import notify
         notify(f"New doctor referral: {r.patient_name} ({r.tests[:60]})",
                link='/m/referrals', role='reception')
-        # staff (logged in) → go to the request board; public doctor → thank-you page
+
         if cur_user():
             flash(f'Doctor Request created for {r.patient_name}')
             return redirect(url_for('modules.module', mod='reqboard'))
+
         return public_shell('Referral Sent',
             "<div class='panel'><div class='pad' style='text-align:center;padding:44px 20px'>"
             "<div style='font-size:46px'>✅</div>"
             "<h2 style='color:var(--green);font-family:Space Grotesk;margin:8px 0'>Referral sent successfully</h2>"
             "<p style='color:var(--muted);max-width:420px;margin:0 auto 16px'>Waan helnay gudbintaada. Xarunta baaritaanka ayaa la xiriiri doonta bukaanka.</p>"
             "<a class='btn primary' href='/refer'>Send another referral</a></div></div>")
-    docs = Doctor.query.filter_by(active=True).order_by(Doctor.name).all()
-    dopts = "<option value=''>— Other (type name below) —</option>" + "".join(
-        f"<option value='{d.id}'>{h(d.name)}{(' · '+h(d.specialty)) if d.specialty else ''}</option>" for d in docs)
-    svcs = Service.query.filter_by(active=True).order_by(Service.department, Service.name).all()
-    picker = _test_picker(svcs)
-    form = f"""<div class='panel'><div class='pad'>
-      <p style='color:var(--muted);font-size:13px;margin-bottom:6px'>Buuxi foomkan si aad bukaan ugu soo dirto xarunta baaritaanka. (Login uma baahna.)</p>
-      <form method='post'>
-      <div class='secttl'>Referring Doctor · Dhakhtarka gudbiya</div>
-      <div class='fld'><label>Select registered doctor</label><select name='doctor_id'>{dopts}</select></div>
-      <div class='g2'><div class='fld'><label>Doctor name (if not listed)</label><input name='doctor_name'></div>
-        <div class='fld'><label>Hospital / Clinic</label><input name='hospital'></div></div>
-      <div class='secttl'>Patient · Bukaanka</div>
-      <div class='g2'><div class='fld'><label>Patient name *</label><input name='patient_name' required></div>
-        <div class='fld'><label>Phone</label><input name='patient_phone'></div>
-        <div class='fld'><label>Age</label><input name='patient_age'></div>
-        <div class='fld'><label>Gender</label><select name='patient_gender'><option value=''>—</option><option>Male</option><option>Female</option></select></div></div>
-      <div class='secttl'>Requested Tests / Scans · Baaritaannada</div>
-      {picker}
-      <div class='fld' style='margin-top:8px'><label>Other tests</label><input name='other_tests' placeholder='e.g. MRI Brain'></div>
-      <div class='fld'><label>Clinical notes</label><textarea name='notes' rows='2' placeholder='Reason for referral, symptoms...'></textarea></div>
-      <div style='text-align:right;margin-top:14px'><button class='btn primary' style='padding:12px 26px;font-size:15px'>Send Referral</button></div>
-      </form></div></div>"""
-    return public_shell('Doctor Referral', form)
+
+    is_staff_user = bool(cur_user())
+    form_html = _render_referral_form_html(is_staff=is_staff_user)
+    return public_shell('Doctor Referral', form_html)
 
 @bp.route('/referral/new')
 @login_required
@@ -199,89 +642,31 @@ def referrals_view():
     from flask import request as _rq
     _pre_name = _pre_phone = _pre_age = _pre_gender = ''
     _pid = _rq.args.get('patient')
+    _pre_pid = ''
     if _pid and str(_pid).isdigit():
         _pp = Patient.query.get(int(_pid))
         if _pp:
-            _pre_name = h(_pp.name or '')
-            _pre_phone = h(_pp.phone or '')
-            _pre_age = h(str(_pp.age)) if _pp.age is not None else ''
+            _pre_pid = str(_pp.id)
+            _pre_name = _pp.name or ''
+            _pre_phone = _pp.phone or ''
+            _pre_age = str(_pp.age) if _pp.age is not None else ''
             _pre_gender = _pp.gender or ''
-    docs = Doctor.query.filter_by(active=True).order_by(Doctor.name).all()
-    dopts = "<option value=''>— Other (type name below) —</option>" + "".join(
-        f"<option value='{d.id}'>{h(d.name)}{(' · '+h(d.specialty)) if d.specialty else ''}</option>" for d in docs)
-    svcs = Service.query.filter_by(active=True).order_by(Service.department, Service.name).all()
-    picker = _test_picker(svcs)
+
+    values = {
+        'patient_id': _pre_pid,
+        'patient_name': _pre_name,
+        'patient_phone': _pre_phone,
+        'patient_age': _pre_age,
+        'patient_gender': _pre_gender,
+    }
     n_new = Referral.query.filter_by(status='New').count()
-    _gopts = ''.join(f"<option {'selected' if _pre_gender==g else ''}>{g}</option>" for g in ('Male', 'Female'))
     head = (f"<div class='panel'><div class='pad' style='display:flex;align-items:center;gap:12px;flex-wrap:wrap'>"
             f"<div><div style='font-weight:700;color:var(--petrol);font-family:Space Grotesk;font-size:16px'>New Doctor Request · Codsi cusub</div>"
             f"<div style='color:var(--muted);font-size:12.5px'>Buuxi foomka si aad u abuurto codsi cusub oo dhakhtar.</div></div>"
             f"<div class='sp' style='flex:1'></div>"
             f"<a class='btn' href='{url_for('modules.module', mod='referrals')}'>← Back to Doctor Requests{f' ({n_new} new)' if n_new else ''}</a></div></div>")
-    _pre_pid = _pid if (_pid and str(_pid).isdigit()) else ''
-    form = f"""<div class='panel'><div class='pad'>
-      <form method='post' action='/refer'>
-      <div class='secttl'>Referring Doctor · Dhakhtarka gudbiya</div>
-      <div class='fld'><label>Select registered doctor</label><select name='doctor_id'>{dopts}</select></div>
-      <div class='g2'><div class='fld'><label>Doctor name (if not listed)</label><input name='doctor_name'></div>
-        <div class='fld'><label>Hospital / Clinic</label><input name='hospital'></div></div>
-      <div class='secttl'>Patient · Bukaanka</div>
-      <input type='hidden' name='patient_id' id='refPid' value="{_pre_pid}">
-      <div class='fld' style='position:relative'>
-        <label>🔎 Find returning patient (ID / name / phone) · Raadi bukaan hore</label>
-        <input id='refPatSearch' autocomplete='off' placeholder='Type MRN, name or phone to reuse an existing patient…'>
-        <div id='refPatResults' style='display:none;position:absolute;z-index:20;left:0;right:0;background:#fff;border:1px solid var(--line);border-radius:8px;box-shadow:0 6px 18px rgba(0,0,0,.12);max-height:240px;overflow:auto'></div>
-        <div id='refPatChosen' style='display:none;margin-top:6px;font-size:12.5px;color:var(--green)'></div>
-      </div>
-      <div class='g2'><div class='fld'><label>Patient name *</label><input name='patient_name' id='refName' value="{_pre_name}" required></div>
-        <div class='fld'><label>Phone</label><input name='patient_phone' id='refPhone' value="{_pre_phone}"></div>
-        <div class='fld'><label>Age</label><input name='patient_age' id='refAge' value="{_pre_age}"></div>
-        <div class='fld'><label>Gender</label><select name='patient_gender' id='refGender'><option value=''>—</option>{_gopts}</select></div></div>
-      <div class='secttl'>Requested Tests / Scans · Baaritaannada</div>
-      {picker}
-      <div class='fld' style='margin-top:8px'><label>Other tests</label><input name='other_tests' placeholder='e.g. MRI Brain'></div>
-      <div class='fld'><label>Clinical notes</label><textarea name='notes' rows='2' placeholder='Reason for referral, symptoms...'></textarea></div>
-      <div style='text-align:right;margin-top:14px'><button class='btn primary' style='padding:12px 26px;font-size:15px'>Create Doctor Request</button></div>
-      </form></div></div>
-      <script>
-      (function(){{
-        var box=document.getElementById('refPatSearch'), res=document.getElementById('refPatResults'),
-            chosen=document.getElementById('refPatChosen'), t=null;
-        function clearPid(){{document.getElementById('refPid').value=''; chosen.style.display='none';}}
-        if(box){{
-          box.addEventListener('input', function(){{
-            clearPid();
-            var q=this.value.trim();
-            if(q.length<2){{res.style.display='none'; return;}}
-            clearTimeout(t);
-            t=setTimeout(function(){{
-              fetch('{url_for('ref.referral_patient_search')}?q='+encodeURIComponent(q))
-              .then(function(r){{return r.json();}}).then(function(list){{
-                if(!list.length){{res.innerHTML="<div style='padding:8px 12px;color:#888;font-size:12.5px'>No match — a new patient will be created.</div>"; res.style.display='block'; return;}}
-                res.innerHTML=list.map(function(p){{
-                  return "<div class='refpat' data-id='"+p.id+"' data-name='"+encodeURIComponent(p.name)+"' data-phone='"+encodeURIComponent(p.phone)+"' data-age='"+p.age+"' data-gender='"+p.gender+"' style='padding:8px 12px;cursor:pointer;border-bottom:1px solid #eee'>"
-                    +"<b>"+p.name+"</b> <span style='color:#888;font-size:12px'>· "+p.mrn+" · "+(p.phone||'—')+"</span></div>";
-                }}).join('');
-                res.style.display='block';
-                Array.prototype.forEach.call(res.querySelectorAll('.refpat'), function(el){{
-                  el.addEventListener('mousedown', function(){{
-                    document.getElementById('refPid').value=el.getAttribute('data-id');
-                    document.getElementById('refName').value=decodeURIComponent(el.getAttribute('data-name'));
-                    document.getElementById('refPhone').value=decodeURIComponent(el.getAttribute('data-phone'));
-                    var ag=el.getAttribute('data-age'); document.getElementById('refAge').value=(ag&&ag!=='None'?ag:'');
-                    var g=el.getAttribute('data-gender'); if(g){{document.getElementById('refGender').value=g;}}
-                    chosen.textContent='✓ Using existing patient — no duplicate will be created.'; chosen.style.display='block';
-                    res.style.display='none'; box.value='';
-                  }});
-                }});
-              }});
-            }}, 220);
-          }});
-          box.addEventListener('blur', function(){{ setTimeout(function(){{res.style.display='none';}}, 200); }});
-        }}
-      }})();
-      </script>"""
-    return page('Doctor Request', head + form, 'referrals')
+    form_html = _render_referral_form_html(values=values, is_staff=True)
+    return page('Doctor Request', head + form_html, 'referrals')
 
 
 def referrals_list_view():

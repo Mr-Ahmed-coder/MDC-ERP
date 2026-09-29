@@ -71,7 +71,7 @@ PERMS = {
  'acct': ['super_admin','accountant'],
  'bankrec': ['super_admin','accountant'],
  'acctdash': ['super_admin','accountant','auditor','branch_manager'],
- 'accounts': ['super_admin','accountant','reception'],
+ 'accounts': ['super_admin','accountant','auditor','branch_manager'],
  'journal': ['super_admin','accountant'],
  'acctguide': ['super_admin','accountant','auditor'],
  'ledger': ['super_admin','accountant','reception'],

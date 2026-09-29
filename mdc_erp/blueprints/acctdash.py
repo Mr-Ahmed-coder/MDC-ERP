@@ -179,7 +179,7 @@ def acct_dashboard():
         f"<div class='panel' style='margin-bottom:14px;padding:10px 14px;display:flex;gap:8px;flex-wrap:wrap;align-items:center'>"
         f"<span style='font-weight:700;font-size:12px;text-transform:uppercase;color:var(--muted);margin-right:4px'>Financial Subsystems:</span>"
         f"<a class='btn sm gh' href='{url_for('modules.module', mod='genledger')}'>General Ledger</a>"
-        f"<a class='btn sm gh' href='{url_for('modules.module', mod='coa')}'>Chart of Accounts</a>"
+        f"<a class='btn sm gh' href='{url_for('modules.module', mod='accounts')}'>Chart of Accounts</a>"
         f"<a class='btn sm gh' href='{url_for('modules.module', mod='jentries')}'>Journal Entries</a>"
         f"<a class='btn sm gh' href='{url_for('modules.module', mod='trialbalance')}'>Trial Balance</a>"
         f"<a class='btn sm gh' href='{url_for('modules.module', mod='pnl')}'>Profit &amp; Loss</a>"

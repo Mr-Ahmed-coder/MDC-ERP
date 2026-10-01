@@ -565,6 +565,7 @@ NAVDEF = [
     ("jentries", "Journal Entries", "M8 2h8a2 2 0 012 2v16l-6-3-6 3V4a2 2 0 012-2z"),
     ("finance", "Financial Statements", "M4 4v16h16M8 16l3-4 3 3 4-6"),
     ("bankrec", "Bank Reconciliation", "M3 10h18M7 15h4M4 4h16v16H4z"),
+    ("fa_dash", "Fixed Assets", "M3 21h18M5 21V7l7-4 7 4v14M9 9h.01M15 9h.01M9 13h.01"),
  ]),
  ("Pharmacy & Inventory", [
     ("pharmacy", "Pharmacy", "M10 3H6a2 2 0 00-2 2v4l8 8 6-6-8-8zM3 21h18"),
@@ -573,7 +574,6 @@ NAVDEF = [
  ("Management", [
     ("employees", "Human Resources", "M9 8a3 3 0 100-6 3 3 0 000 6zM2 21c0-3 3-5 7-5s7 2 7 5"),
     ("assets", "Assets & Maintenance", "M14.7 6.3a5 5 0 00-6.6 6.6L3 18v3h3l5.1-5.1a5 5 0 006.6-6.6l-3 3-2.6-2.6 3-3z"),
-    ("fa_dash", "Fixed Assets", "M3 21h18M5 21V7l7-4 7 4v14M9 9h.01M15 9h.01M9 13h.01"),
     ("logistics", "Logistics", "M1 3h15v13H1zM16 8h4l3 3v5h-7M5.5 19a1.5 1.5 0 100-3 1.5 1.5 0 000 3zM18.5 19a1.5 1.5 0 100-3 1.5 1.5 0 000 3z"),
     ("sops", "SOPs & Documents", "M6 2h9l5 5v15H6zM9 12h6M9 16h6"),
     ("incidents", "Incidents", "M12 2L2 20h20L12 2zm0 7v5m0 3v.1"),
@@ -879,9 +879,9 @@ def _app_launcher(active=''):
 
 def nav_html(active):
     ag = KEY2GROUP.get(active)
-    is_acct_active = (active in ('acctdash', 'acct', 'findash', 'genledger', 'coa', 'accounts', 'jentries', 'journal', 'finance', 'pnl', 'balance_sheet', 'cashflow', 'bankrec')
-                      or ag == 'accounting'
-                      or (request and (request.path.startswith('/acctdash') or request.path.startswith('/gl') or request.path.startswith('/journal') or request.path.startswith('/coa') or request.path.startswith('/m/accounts'))))
+    is_acct_active = (active in ('acctdash', 'acct', 'findash', 'genledger', 'coa', 'accounts', 'jentries', 'journal', 'finance', 'pnl', 'balance_sheet', 'cashflow', 'bankrec', 'fa_dash', 'fa_register', 'fa_purchase', 'fa_categories', 'fa_depreciation', 'fa_depjournal', 'fa_transfer', 'fa_maintenance', 'fa_disposal', 'fa_revaluation', 'fa_reports', 'fa_settings')
+                      or ag in ('accounting', 'fixedassets')
+                      or (request and (request.path.startswith('/acctdash') or request.path.startswith('/gl') or request.path.startswith('/journal') or request.path.startswith('/coa') or request.path.startswith('/m/accounts') or request.path.startswith('/m/fa_'))))
     first_group = NAVDEF[0][0] if NAVDEF else None
     out = []
     for group, items in NAVDEF:
@@ -897,7 +897,7 @@ def nav_html(active):
                 if not can(key):
                     continue
                 href = url_for('dash.dashboard') if key=='dashboard' else url_for('modules.module', mod=key)
-                is_active = (key == active or (key in ('coa', 'accounts') and active in ('accounts', 'coa')) or (key == 'jentries' and active in ('jentries', 'journal')))
+                is_active = (key == active or (key in ('coa', 'accounts') and active in ('accounts', 'coa')) or (key == 'jentries' and active in ('jentries', 'journal')) or (key == 'fa_dash' and (active == 'fa_dash' or active.startswith('fa_') or active == 'fixedassets')))
             elif g := KEY2GROUP.get(key):
                 subs = [k for k,_ in GROUPS[g][1] if can(k)]
                 if not subs: continue
@@ -1000,6 +1000,7 @@ ACCT_MENUBAR = [
         ("ccreport", "Cost Center Report"),
         ("ratios", "Financial Ratios"),
         ("revreport", "Revenue Analysis"),
+        ("fa_dash", "Fixed Assets"),
     ]),
     ("Reports", "finance", [
         ("finance", "Financial Statements"),
@@ -1016,7 +1017,9 @@ ACCT_KEYS = {
     'expenses', 'payables', 'paycenter', 'genledger', 'ledger', 'gldash', 'partnerledger',
     'coa', 'accounts', 'acctbal', 'trialbal', 'araging', 'apaging', 'banks', 'bankrec',
     'bankrecon', 'cashflow', 'budgets', 'budgetreport', 'costcenters', 'ccreport',
-    'ratios', 'revreport', 'finance', 'pnl', 'balance_sheet', 'taxreport', 'fiscal', 'currencies'
+    'ratios', 'revreport', 'finance', 'pnl', 'balance_sheet', 'taxreport', 'fiscal', 'currencies',
+    'fa_dash', 'fa_register', 'fa_purchase', 'fa_categories', 'fa_depreciation', 'fa_depjournal',
+    'fa_transfer', 'fa_maintenance', 'fa_disposal', 'fa_revaluation', 'fa_reports', 'fa_settings'
 }
 
 ACCT_BAR_TRIGGER = ACCT_KEYS
@@ -1047,6 +1050,7 @@ def _can_acct(key):
         'taxreport': ('taxreport', 'accounting'),
         'fiscal': ('fiscal', 'accounting', 'settings'),
         'currencies': ('currencies', 'accounting', 'settings'),
+        'fa_dash': ('fa_dash', 'fa_register', 'fa_dash', 'assets', 'accounting'),
     }
     aliases = perm_map.get(key, (key, 'accounting'))
     return any(can(p) for p in aliases)
@@ -1062,6 +1066,7 @@ def _is_active_key(item_key, active):
         'jentries': {'jentries', 'journal', 'jitems'},
         'bankrec': {'bankrec', 'bankrecon'},
         'finance': {'finance', 'pnl', 'balance_sheet', 'trialbal', 'acctbal'},
+        'fa_dash': {'fa_dash', 'fa_register', 'fa_purchase', 'fa_categories', 'fa_depreciation', 'fa_depjournal', 'fa_transfer', 'fa_maintenance', 'fa_disposal', 'fa_revaluation', 'fa_reports', 'fa_settings'},
     }
     return active in aliases.get(item_key, set())
 
@@ -1078,6 +1083,8 @@ def _acct_url(key):
             return url_for('modules.module', mod='jentries')
         if key in ('bankrec', 'bankrecon'):
             return url_for('modules.module', mod='bankrec')
+        if key in ('fa_dash', 'fa_register'):
+            return url_for('modules.module', mod='fa_dash')
         return url_for('modules.module', mod=key)
     except Exception:
         return f"/{key}"
@@ -1230,43 +1237,129 @@ def _menubar(active, structure):
 
 # ---- Odoo-style menubars for every other app area ----
 CLINICAL_MENUBAR = [
-    ("Patients", None, [
+    ("Patients", "patients", [
         ("patients", "Patient Registration"),
         ("queue", "Reception Queue"),
         ("consult", "Consultation"),
     ]),
-    ("Doctor Requests", None, [
-        ("referrals", "Requests (List)"),
+    ("Doctor Requests", "referrals", [
+        ("referrals", "Doctor Requests"),
         ("reqboard", "Request Board"),
     ]),
-    ("Referral Management", None, [
+    ("Referral Management", "doctors", [
         ("doctors", "Referring Doctors"),
         ("radiologists", "Radiologists"),
     ]),
-    ("Blood Bank", None, [
+    ("Blood Bank", "donors", [
         ("donors", "Donors"),
         ("bloodunits", "Blood Units"),
     ]),
-    ("Vaccination", None, [("vaccinations", "Vaccination")]),
+    ("Vaccination", "vaccinations", [
+        ("vaccinations", "Vaccination"),
+    ]),
 ]
 
+CLINICAL_KEYS = {
+    'patients', 'patient_detail', 'patient_new', 'queue', 'reception', 'consult', 'consultation',
+    'referrals', 'referral_detail', 'referral_new', 'refer', 'reqboard',
+    'doctors', 'doctor_detail', 'radiologists', 'donors', 'bloodunits', 'vaccinations'
+}
+
+def _can_clinical(key):
+    aliases = {
+        'bloodunits': ('bloodunits', 'donors'),
+        'donors': ('donors', 'bloodunits'),
+        'reqboard': ('reqboard', 'referrals'),
+        'doctors': ('doctors', 'referrals'),
+        'radiologists': ('radiologists', 'radiology'),
+    }
+    targets = aliases.get(key, (key,))
+    return any(can(t) for t in targets)
+
+def _is_active_clinical_key(item_key, active):
+    if item_key == active:
+        return True
+    aliases = {
+        'patients': {'patients', 'patient_detail', 'patient_new'},
+        'queue': {'queue', 'reception'},
+        'consult': {'consult', 'consultation'},
+        'referrals': {'referrals', 'referral_detail', 'referral_new', 'refer'},
+        'reqboard': {'reqboard'},
+        'doctors': {'doctors', 'doctor_detail'},
+        'radiologists': {'radiologists'},
+        'donors': {'donors'},
+        'bloodunits': {'bloodunits'},
+        'vaccinations': {'vaccinations'},
+    }
+    return active in aliases.get(item_key, set())
+
+def _clinical_url(key):
+    try:
+        if key in ('patients', 'patient_detail', 'patient_new'):
+            return url_for('modules.module', mod='patients')
+        if key in ('referrals', 'referral_new'):
+            return url_for('modules.module', mod='referrals')
+        return url_for('modules.module', mod=key)
+    except Exception:
+        return f"/{key}"
+
+def _clinical_menubar(active):
+    return _grouped_menubar(active, CLINICAL_MENUBAR, "Clinical", _can_clinical, _clinical_url, _is_active_clinical_key)
+
+
 DIAG_MENUBAR = [
-    ("Laboratory", None, [
+    ("Laboratory", "lab", [
         ("lab", "Lab Requests"),
         ("labqc", "Quality Control"),
     ]),
-    ("Radiology", None, [
+    ("Radiology", "radiology", [
         ("radiology", "Radiology / Imaging"),
         ("radiologists", "Radiologists"),
     ]),
 ]
 
+DIAG_KEYS = {
+    'lab', 'lab_detail', 'lab_new', 'lab_order', 'labqc',
+    'radiology', 'rad_detail', 'rad_new', 'rad_order', 'radiologists'
+}
+
+def _can_diag(key):
+    aliases = {
+        'lab': ('lab', 'laboratory'),
+        'labqc': ('labqc', 'lab', 'quality'),
+        'radiology': ('radiology', 'ris'),
+        'radiologists': ('radiologists', 'radiology'),
+    }
+    targets = aliases.get(key, (key,))
+    return any(can(t) for t in targets)
+
+def _is_active_diag_key(item_key, active):
+    if item_key == active:
+        return True
+    aliases = {
+        'lab': {'lab', 'lab_detail', 'lab_new', 'lab_order'},
+        'labqc': {'labqc'},
+        'radiology': {'radiology', 'rad_detail', 'rad_new', 'rad_order'},
+        'radiologists': {'radiologists'},
+    }
+    return active in aliases.get(item_key, set())
+
+def _diag_url(key):
+    try:
+        return url_for('modules.module', mod=key)
+    except Exception:
+        return f"/{key}"
+
+def _diag_menubar(active):
+    return _grouped_menubar(active, DIAG_MENUBAR, "Diagnostics", _can_diag, _diag_url, _is_active_diag_key)
+
+
 INV_MENUBAR = [
-    ("Pharmacy", None, [
+    ("Pharmacy", "pharmacy", [
         ("pharmacy", "Pharmacy Sales"),
         ("batches", "Batches (FEFO)"),
     ]),
-    ("Inventory", None, [
+    ("Inventory", "inventory", [
         ("inventory", "Supplies / Stock"),
         ("warehouses", "Warehouses"),
         ("transfers", "Stock Transfers"),
@@ -1274,11 +1367,63 @@ INV_MENUBAR = [
         ("stockvalue", "Inventory Valuation"),
         ("consumption", "Consumption Report"),
     ]),
-    ("Procurement", None, [
+    ("Procurement", "purchases", [
         ("purchases", "Purchase Orders"),
         ("suppliers", "Suppliers"),
+        ("debitnotes", "Debit Notes"),
     ]),
 ]
+
+INV_KEYS = {
+    'pharmacy', 'pharmacy_sale', 'batches',
+    'inventory', 'supplies', 'warehouses', 'transfers', 'stockadj', 'stockvalue', 'consumption',
+    'purchases', 'po_detail', 'suppliers', 'debitnotes'
+}
+
+def _can_inv(key):
+    aliases = {
+        'pharmacy': ('pharmacy', 'inventory'),
+        'batches': ('batches', 'pharmacy', 'inventory'),
+        'inventory': ('inventory', 'suppliers'),
+        'warehouses': ('warehouses', 'inventory'),
+        'transfers': ('transfers', 'inventory'),
+        'stockadj': ('stockadj', 'inventory'),
+        'stockvalue': ('stockvalue', 'inventory', 'accounting'),
+        'consumption': ('consumption', 'inventory'),
+        'purchases': ('purchases', 'inventory'),
+        'suppliers': ('suppliers', 'inventory'),
+        'debitnotes': ('debitnotes', 'purchases', 'accounting'),
+    }
+    targets = aliases.get(key, (key, 'inventory'))
+    return any(can(t) for t in targets)
+
+def _is_active_inv_key(item_key, active):
+    if item_key == active:
+        return True
+    aliases = {
+        'pharmacy': {'pharmacy', 'pharmacy_sale'},
+        'batches': {'batches'},
+        'inventory': {'inventory', 'supplies'},
+        'warehouses': {'warehouses'},
+        'transfers': {'transfers'},
+        'stockadj': {'stockadj'},
+        'stockvalue': {'stockvalue'},
+        'consumption': {'consumption'},
+        'purchases': {'purchases', 'po_detail'},
+        'suppliers': {'suppliers'},
+        'debitnotes': {'debitnotes'},
+    }
+    return active in aliases.get(item_key, set())
+
+def _inv_url(key):
+    try:
+        return url_for('modules.module', mod=key)
+    except Exception:
+        return f"/{key}"
+
+def _inv_menubar(active):
+    return _grouped_menubar(active, INV_MENUBAR, "Pharmacy & Inventory", _can_inv, _inv_url, _is_active_inv_key)
+
 
 HR_MENUBAR = [
     ("Employees", None, [
@@ -1360,6 +1505,12 @@ def subnav_html(active):
         return _billing_menubar(active)
     if active in ACCT_BAR_TRIGGER or active in ACCT_KEYS or KEY2GROUP.get(active) == 'accounting':
         return _acct_menubar(active)
+    if active in CLINICAL_KEYS or KEY2GROUP.get(active) in ('clinical', 'patients', 'referrals'):
+        return _clinical_menubar(active)
+    if active in DIAG_KEYS or KEY2GROUP.get(active) in ('diag', 'lab', 'radiology'):
+        return _diag_menubar(active)
+    if active in INV_KEYS or KEY2GROUP.get(active) in ('inventory', 'pharmacy'):
+        return _inv_menubar(active)
     app = BAR_TRIGGER.get(active)
     if app and app in APP_BARS:
         return _menubar(active, APP_BARS[app])

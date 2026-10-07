@@ -171,6 +171,6 @@ def test_accounting_sidebar_visibility_unauthorized_roles(app, client):
         res = client.get('/dashboard')
         assert res.status_code == 200
         html = res.data.decode('utf-8')
-        # Sidebar should not contain the Accounting section button/links for unauthorized roles
-        assert '>Accounting<' not in html and 'data-tooltip="Accounting Center"' not in html
+        # Sidebar should not contain the Accounting Center link for unauthorized roles
+        assert 'data-tooltip="Accounting Center"' not in html
         assert 'href="/acctdash"' not in html

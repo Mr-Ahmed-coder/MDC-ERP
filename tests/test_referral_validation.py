@@ -355,3 +355,11 @@ def test_csrf_remains_enforced(app):
     })
     # CSRF failure yields 400 or 403
     assert res.status_code in (400, 403)
+
+
+def test_doctor_request_form_renders_required_star(app):
+    c = _client(app, 'super_admin')
+    res = c.get('/referral/new')
+    assert res.status_code == 200
+    html = res.get_data(as_text=True)
+    assert "<label>Select registered doctor <span style='color:var(--red)'>*</span></label>" in html or "<label>Select registered doctor <span style=\"color:var(--red)\">*</span></label>" in html

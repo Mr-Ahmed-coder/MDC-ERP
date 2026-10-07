@@ -218,7 +218,7 @@ def _render_referral_form_html(errors=None, values=None, is_staff=False):
       <input type='hidden' name='_csrf' value='{csrf_token()}'>
       <div class='secttl'>Referring Doctor · Dhakhtarka gudbiya</div>
       <div class='fld'>
-        <label>Select registered doctor</label>
+        <label>Select registered doctor <span style='color:var(--red)'>*</span></label>
         <select name='doctor_id' class='{field_cls("doctor_id")}' style='{field_sty("doctor_id")}'>{dopts}</select>
         {err_div("doctor_id")}
       </div>

@@ -63,10 +63,9 @@ def _validate_production_environment():
         except Exception:
             pass
 
-    # Ensure fallback 32+ char secrets if missing in environment
     secret = os.environ.get('SECRET_KEY', '')
     if not secret or len(secret) < 32:
-        os.environ['SECRET_KEY'] = secrets.token_hex(32)
+        raise RuntimeError("Missing or weak SECRET_KEY in production mode (must be at least 32 characters)")
     
     if not os.environ.get('JWT_SECRET_KEY') or len(os.environ.get('JWT_SECRET_KEY', '')) < 32:
         os.environ['JWT_SECRET_KEY'] = secrets.token_hex(32)

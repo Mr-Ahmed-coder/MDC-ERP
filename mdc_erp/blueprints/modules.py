@@ -763,8 +763,8 @@ def module_new(mod):
             _dob = (request.form.get('dob') or '').strip()
             _age = (request.form.get('age_years') or '').strip()
             _bg = (request.form.get('blood_group') or '').strip()
-            if not _nm or not _ph or not _gn or (not _dob and not _age) or not _bg:
-                flash('Validation Error: Please fill in all required fields (Full Name, Phone, Gender, Date of Birth or Age, and Blood Group).')
+            if not _nm or not _ph or not _gn or (not _dob and not _age):
+                flash('Validation Error: Please fill in all required fields (Full Name, Phone, Gender, Date of Birth or Age).')
                 return redirect(url_for('modules.module_new', mod='patients'))
         if mod == 'patients' and not request.form.get('dup_ok'):
             _ph=(request.form.get('phone') or '').strip()
@@ -835,8 +835,8 @@ def module_edit(mod, oid):
             _dob = (request.form.get('dob') or '').strip()
             _age = (request.form.get('age_years') or '').strip()
             _bg = (request.form.get('blood_group') or '').strip()
-            if not _nm or not _ph or not _gn or (not _dob and not _age) or not _bg:
-                flash('Validation Error: Please fill in all required fields (Full Name, Phone, Gender, Date of Birth or Age, and Blood Group).')
+            if not _nm or not _ph or not _gn or (not _dob and not _age):
+                flash('Validation Error: Please fill in all required fields (Full Name, Phone, Gender, Date of Birth or Age).')
                 return redirect(url_for('modules.module_edit', mod='patients', oid=oid))
         _oldprices={k:getattr(o,k,None) for k in ('price','price_insurance','price_corporate','price_vip','price_contract')} if mod=='services' else None
         _SENSITIVE={'pw','password','pin','totp_secret','api_key','secret'}

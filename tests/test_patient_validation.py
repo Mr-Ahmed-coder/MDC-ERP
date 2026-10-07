@@ -50,7 +50,10 @@ def test_new_patient_form_renders_required_stars(app):
     assert 'Gender <span style="color:var(--amber-dk)">*</span>' in html
     assert 'Date of Birth (age auto-calculated) <span style="color:var(--amber-dk)">*</span>' in html
     assert 'Age (years) — use if date of birth is unknown <span style="color:var(--amber-dk)">*</span>' in html
-    assert 'Blood Group <span style="color:var(--amber-dk)">*</span>' in html
+
+    # Verify Blood Group is optional (does NOT have required star)
+    assert 'Blood Group' in html
+    assert 'Blood Group <span style="color:var(--amber-dk)">*</span>' not in html
 
 def test_missing_required_fields_rejected(app):
     c = app.test_client()
@@ -78,12 +81,21 @@ def test_missing_required_fields_rejected(app):
     }, follow_redirects=True)
     assert 'Validation Error' in res3.get_data(as_text=True)
 
-    # Missing Blood Group
-    res4 = c.post('/m/patients/new', data={
-        'name': 'Valid Name', 'phone': '0612345678', 'gender': 'Male',
+def test_missing_blood_group_succeeds(app):
+    c = app.test_client()
+    _login(c, app, 'super_admin')
+    tok = _get_csrf(c)
+
+    # Missing Blood Group should succeed now (optional field)
+    res = c.post('/m/patients/new', data={
+        'name': 'No BloodGroup Patient', 'phone': '0612345999', 'gender': 'Male',
         'age_years': '25', 'blood_group': '', '_csrf': tok
     }, follow_redirects=True)
-    assert 'Validation Error' in res4.get_data(as_text=True)
+    assert res.status_code == 200
+    assert 'Validation Error' not in res.get_data(as_text=True)
+    with app.app_context():
+        p = Patient.query.filter_by(name='No BloodGroup Patient').first()
+        assert p is not None
 
 def test_dob_or_age_either_succeeds(app):
     c = app.test_client()

@@ -756,6 +756,16 @@ def module_new(mod):
         if mod in POST_HOOKS and _d and not _period_open(_d):
             flash(f'Period closed: cannot post to {_d[:7]}. Reopen it in Accounting → Fiscal Periods.')
             return redirect(url_for('modules.module_new', mod=mod))
+        if mod == 'patients':
+            _nm = (request.form.get('name') or '').strip()
+            _ph = (request.form.get('phone') or '').strip()
+            _gn = (request.form.get('gender') or '').strip()
+            _dob = (request.form.get('dob') or '').strip()
+            _age = (request.form.get('age_years') or '').strip()
+            _bg = (request.form.get('blood_group') or '').strip()
+            if not _nm or not _ph or not _gn or (not _dob and not _age) or not _bg:
+                flash('Validation Error: Please fill in all required fields (Full Name, Phone, Gender, Date of Birth or Age, and Blood Group).')
+                return redirect(url_for('modules.module_new', mod='patients'))
         if mod == 'patients' and not request.form.get('dup_ok'):
             _ph=(request.form.get('phone') or '').strip()
             _nm=(request.form.get('name') or '').strip()
@@ -818,6 +828,16 @@ def module_edit(mod, oid):
         if mod in POST_HOOKS and _d and not _period_open(_d):
             flash(f'Period closed: cannot post to {_d[:7]}. Reopen it in Accounting → Fiscal Periods.')
             return redirect(url_for('modules.module_edit', mod=mod, oid=oid))
+        if mod == 'patients':
+            _nm = (request.form.get('name') or '').strip()
+            _ph = (request.form.get('phone') or '').strip()
+            _gn = (request.form.get('gender') or '').strip()
+            _dob = (request.form.get('dob') or '').strip()
+            _age = (request.form.get('age_years') or '').strip()
+            _bg = (request.form.get('blood_group') or '').strip()
+            if not _nm or not _ph or not _gn or (not _dob and not _age) or not _bg:
+                flash('Validation Error: Please fill in all required fields (Full Name, Phone, Gender, Date of Birth or Age, and Blood Group).')
+                return redirect(url_for('modules.module_edit', mod='patients', oid=oid))
         _oldprices={k:getattr(o,k,None) for k in ('price','price_insurance','price_corporate','price_vip','price_contract')} if mod=='services' else None
         _SENSITIVE={'pw','password','pin','totp_secret','api_key','secret'}
         _editable=[f['name'] for f in r['fields'] if f['name'] not in _SENSITIVE]

@@ -153,3 +153,96 @@ def test_fixed_assets_relocated_to_accounting(app):
     assert 'fa_dash' in acct_keys, "fa_dash must be in Accounting NAVDEF group"
     assert 'fa_dash' not in mgmt_keys, "fa_dash must not be in Management NAVDEF group"
     assert 'assets' in mgmt_keys, "Assets & Maintenance must remain in Management"
+
+
+def test_hr_horizontal_navigation(app):
+    c = app.test_client()
+    _login(c, app, 'super_admin')
+    res = c.get('/m/employees')
+    assert res.status_code == 200
+    html = res.get_data(as_text=True)
+
+    assert 'class="mbar-desktop"' in html
+    assert 'data-menu="human-resources"' in html
+    assert 'class="mbar-mobile-wrap"' in html
+    assert 'Human Resources Menu:' in html
+
+    for group in ['Employees', 'Time', 'Payroll']:
+        assert group in html, f'Missing HR group {group}'
+    for link in ['Employees', 'Contracts', 'Attendance', 'Leave', 'Payroll', 'Salary Advances', 'Employee Loans']:
+        assert link in html, f'Missing HR link {link}'
+
+    assert 'mb-top on' in html or 'class="on"' in html or 'class="mb-top on"' in html
+
+
+def test_admin_horizontal_navigation(app):
+    c = app.test_client()
+    _login(c, app, 'super_admin')
+    res = c.get('/m/branches')
+    assert res.status_code == 200
+    html = res.get_data(as_text=True)
+
+    assert 'class="mbar-desktop"' in html
+    assert 'data-menu="administration"' in html
+    assert 'class="mbar-mobile-wrap"' in html
+    assert 'Administration Menu:' in html
+
+    for group in ['Branches', 'System Management', 'Logs &amp; Security']:
+        assert group in html or 'Branches &amp; Access' in html, f'Missing Admin group {group}'
+    for link in ['Branches', 'User Management', 'Settings', 'Service Management', 'Backup &amp; Restore', 'Audit Log', 'Error Log', 'System Health', 'Login Security']:
+        assert link in html or link.replace('&amp;', '&') in html, f'Missing Admin link {link}'
+
+    assert 'mb-top on' in html or 'class="on"' in html or 'class="mb-top on"' in html
+
+
+def test_backup_sidebar_navigation(app):
+    c = app.test_client()
+    _login(c, app, 'super_admin')
+
+    res = c.get('/m/backup')
+    assert res.status_code in (200, 302)
+    html = res.get_data(as_text=True)
+
+    # Backup link is present in sidebar under Administration
+    assert 'href="/m/backup"' in html or 'Backup &amp; Restore' in html or 'Backup' in html
+
+    # Verify backup is inside Administration NAVDEF group
+    from mdc_erp.core.ui import NAVDEF
+    admin_keys = [k for group, items in NAVDEF if group == 'Administration' for k, l, p in items]
+    assert 'backup' in admin_keys, "backup must be in Administration NAVDEF group"
+
+    # Unauthorized role (engineer/reception) should not see backup link in sidebar
+    c_unauth = app.test_client()
+    _login(c_unauth, app, 'engineer')
+    res_unauth = c_unauth.get('/m/sops')
+    if res_unauth.status_code == 200:
+        html_unauth = res_unauth.get_data(as_text=True)
+        assert 'href="/m/backup"' not in html_unauth
+
+
+def test_assets_and_logistics_horizontal_navigation(app):
+    c = app.test_client()
+    _login(c, app, 'super_admin')
+
+    # Assets & Maintenance
+    res_assets = c.get('/m/assets')
+    assert res_assets.status_code == 200
+    html_assets = res_assets.get_data(as_text=True)
+
+    assert 'class="mbar-desktop"' in html_assets
+    assert 'data-menu="assets---logistics"' in html_assets
+    assert 'class="mbar-mobile-wrap"' in html_assets
+    assert 'Assets &amp; Maintenance' in html_assets or 'Assets & Maintenance' in html_assets
+    assert 'Asset Register' in html_assets
+    assert 'Maintenance Jobs' in html_assets
+    assert 'Logistics' in html_assets
+
+    # Logistics workspace
+    res_logistics = c.get('/m/logistics')
+    assert res_logistics.status_code == 200
+    html_logistics = res_logistics.get_data(as_text=True)
+
+    assert 'class="mbar-desktop"' in html_logistics
+    assert 'data-menu="assets---logistics"' in html_logistics
+    assert 'Logistics' in html_logistics
+    assert 'mb-top on' in html_logistics or 'class="on"' in html_logistics or 'mbar-mobile-link on' in html_logistics

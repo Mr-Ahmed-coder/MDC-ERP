@@ -586,6 +586,7 @@ NAVDEF = [
     ("audit", "Audit Log", "M9 12h6M9 16h6M6 2h9l5 5v13H6zM9 8h2"),
     ("errorlog", "Error Log", "M12 2L2 20h20L12 2zm0 7v5m0 3v.1"),
     ("syshealth", "System Health", "M3 12h4l3 8 4-16 3 8h4"),
+    ("backup", "Backup & Restore", "M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M17 8l-5-5-5 5M12 3v12"),
     ("svcmgmt", "Service Management", "M20 7h-9M14 17H5M17 17a3 3 0 100-6 3 3 0 000 6zM7 7a3 3 0 100 6 3 3 0 000-6z"),
     ("settings", "Settings", "M12 15a3 3 0 100-6 3 3 0 000 6zM19.4 13a7.6 7.6 0 000-2l2-1.5-2-3.5-2.4 1a7 7 0 00-1.7-1L14 2h-4l-.8 2.5a7 7 0 00-1.7 1l-2.4-1-2 3.5L3.6 11a7.6 7.6 0 000 2L1.6 14.5l2 3.5 2.4-1a7 7 0 001.7 1L10 22h4l.8-2.5a7 7 0 001.7-1l2.4 1 2-3.5z"),
  ]),
@@ -1031,7 +1032,7 @@ def _can_acct(key):
         'jentries': ('jentries', 'journal', 'accounting', 'genledger'),
         'recurjournals': ('recurjournals', 'journal', 'accounting'),
         'expenses': ('expenses', 'accounting', 'purchases'),
-        'payables': ('payables', 'accounting', 'commission'),
+        'payables': ('payables', 'accounting'),
         'genledger': ('genledger', 'ledger', 'accounting'),
         'partnerledger': ('partnerledger', 'accounting', 'genledger'),
         'coa': ('coa', 'accounts', 'accounting'),
@@ -1426,16 +1427,63 @@ def _inv_menubar(active):
 
 
 HR_MENUBAR = [
-    ("Employees", None, [
+    ("Employees", "employees", [
         ("employees", "Employees"),
         ("contracts", "Contracts"),
     ]),
-    ("Time", None, [
+    ("Time", "attendance", [
         ("attendance", "Attendance"),
         ("leave", "Leave"),
     ]),
-    ("Payroll", None, [("payroll", "Payroll")]),
+    ("Payroll", "payroll", [
+        ("payroll", "Payroll"),
+        ("advances", "Salary Advances"),
+        ("loans", "Employee Loans"),
+    ]),
 ]
+
+HR_KEYS = {
+    'employees', 'emp_detail', 'emp_new', 'contracts',
+    'attendance', 'leave', 'leave_new',
+    'payroll', 'advances', 'loans'
+}
+
+def _can_hr(key):
+    aliases = {
+        'employees': ('employees', 'hr'),
+        'contracts': ('contracts', 'employees', 'hr'),
+        'attendance': ('attendance', 'hr'),
+        'leave': ('leave', 'attendance', 'hr'),
+        'payroll': ('payroll', 'hr', 'accounting'),
+        'advances': ('advances', 'payroll', 'hr'),
+        'loans': ('loans', 'payroll', 'hr'),
+    }
+    targets = aliases.get(key, (key, 'hr'))
+    return any(can(t) for t in targets)
+
+def _is_active_hr_key(item_key, active):
+    if item_key == active:
+        return True
+    aliases = {
+        'employees': {'employees', 'emp_detail', 'emp_new'},
+        'contracts': {'contracts'},
+        'attendance': {'attendance'},
+        'leave': {'leave', 'leave_new'},
+        'payroll': {'payroll'},
+        'advances': {'advances'},
+        'loans': {'loans'},
+    }
+    return active in aliases.get(item_key, set())
+
+def _hr_url(key):
+    try:
+        return url_for('modules.module', mod=key)
+    except Exception:
+        return f"/{key}"
+
+def _hr_menubar(active):
+    return _grouped_menubar(active, HR_MENUBAR, "Human Resources", _can_hr, _hr_url, _is_active_hr_key)
+
 
 QUALITY_MENUBAR = [
     ("Quality", None, [
@@ -1447,13 +1495,52 @@ QUALITY_MENUBAR = [
 ]
 
 ASSETS_MENUBAR = [
-    ("Assets", None, [
+    ("Assets & Maintenance", "assets", [
         ("maintdash", "Maintenance Overview"),
         ("assets", "Asset Register"),
         ("maintenance", "Maintenance Jobs"),
     ]),
-    ("Logistics", None, [("logistics", "Logistics")]),
+    ("Logistics", "logistics", [
+        ("logistics", "Logistics"),
+    ]),
 ]
+
+ASSETS_KEYS = {
+    'maintdash', 'assets', 'asset_detail', 'asset_new',
+    'maintenance', 'maint_detail', 'maint_new',
+    'logistics'
+}
+
+def _can_assets(key):
+    aliases = {
+        'maintdash': ('maintdash', 'assets'),
+        'assets': ('assets', 'maintdash'),
+        'maintenance': ('maintenance', 'assets'),
+        'logistics': ('logistics', 'inventory', 'storekeeper'),
+    }
+    targets = aliases.get(key, (key, 'assets'))
+    return any(can(t) for t in targets)
+
+def _is_active_assets_key(item_key, active):
+    if item_key == active:
+        return True
+    aliases = {
+        'maintdash': {'maintdash'},
+        'assets': {'assets', 'asset_detail', 'asset_new'},
+        'maintenance': {'maintenance', 'maint_detail', 'maint_new'},
+        'logistics': {'logistics'},
+    }
+    return active in aliases.get(item_key, set())
+
+def _assets_url(key):
+    try:
+        return url_for('modules.module', mod=key)
+    except Exception:
+        return f"/{key}"
+
+def _assets_menubar(active):
+    return _grouped_menubar(active, ASSETS_MENUBAR, "Assets & Logistics", _can_assets, _assets_url, _is_active_assets_key)
+
 
 REPORTS_MENUBAR = [
     ("Reports", None, [
@@ -1466,23 +1553,71 @@ REPORTS_MENUBAR = [
 ]
 
 ADMIN_MENUBAR = [
-    ("Users & Access", None, [
-        ("users", "User Management"),
+    ("Branches & Access", "branches", [
         ("branches", "Branches"),
+        ("users", "User Management"),
     ]),
-    ("System", None, [
+    ("System Management", "settings", [
         ("settings", "Settings"),
         ("svcmgmt", "Service Management"),
         ("backup", "Backup & Restore"),
         ("messages", "Messages / SMS"),
     ]),
-    ("Logs", None, [
+    ("Logs & Security", "audit", [
         ("audit", "Audit Log"),
         ("errorlog", "Error Log"),
         ("syshealth", "System Health"),
         ("loginhistory", "Login Security"),
     ]),
 ]
+
+ADMIN_KEYS = {
+    'users', 'branches', 'settings', 'svcmgmt', 'backup', 'messages',
+    'audit', 'errorlog', 'syshealth', 'loginhistory'
+}
+
+def _can_admin(key):
+    aliases = {
+        'users': ('users', 'admin'),
+        'branches': ('branches', 'admin'),
+        'settings': ('settings', 'admin'),
+        'svcmgmt': ('svcmgmt', 'settings', 'admin'),
+        'backup': ('backup', 'settings', 'admin'),
+        'messages': ('messages', 'settings', 'admin'),
+        'audit': ('audit', 'admin'),
+        'errorlog': ('errorlog', 'admin'),
+        'syshealth': ('syshealth', 'admin'),
+        'loginhistory': ('loginhistory', 'audit', 'admin'),
+    }
+    targets = aliases.get(key, (key, 'admin'))
+    return any(can(t) for t in targets)
+
+def _is_active_admin_key(item_key, active):
+    if item_key == active:
+        return True
+    aliases = {
+        'users': {'users', 'user_detail', 'user_new'},
+        'branches': {'branches', 'branch_detail', 'branch_new'},
+        'settings': {'settings'},
+        'svcmgmt': {'svcmgmt'},
+        'backup': {'backup'},
+        'messages': {'messages'},
+        'audit': {'audit'},
+        'errorlog': {'errorlog'},
+        'syshealth': {'syshealth'},
+        'loginhistory': {'loginhistory'},
+    }
+    return active in aliases.get(item_key, set())
+
+def _admin_url(key):
+    try:
+        return url_for('modules.module', mod=key)
+    except Exception:
+        return f"/{key}"
+
+def _admin_menubar(active):
+    return _grouped_menubar(active, ADMIN_MENUBAR, "Administration", _can_admin, _admin_url, _is_active_admin_key)
+
 
 APP_BARS = {
     'clinical': CLINICAL_MENUBAR,
@@ -1511,6 +1646,12 @@ def subnav_html(active):
         return _diag_menubar(active)
     if active in INV_KEYS or KEY2GROUP.get(active) in ('inventory', 'pharmacy'):
         return _inv_menubar(active)
+    if active in HR_KEYS or KEY2GROUP.get(active) in ('hr', 'employees', 'payroll'):
+        return _hr_menubar(active)
+    if active in ADMIN_KEYS or KEY2GROUP.get(active) in ('admin', 'users', 'branches'):
+        return _admin_menubar(active)
+    if active in ASSETS_KEYS or KEY2GROUP.get(active) in ('assets', 'logistics'):
+        return _assets_menubar(active)
     app = BAR_TRIGGER.get(active)
     if app and app in APP_BARS:
         return _menubar(active, APP_BARS[app])

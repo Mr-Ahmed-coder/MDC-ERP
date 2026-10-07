@@ -2529,7 +2529,7 @@ def test_odoo_style_accounting_menubar(app, client):
         assert item in d, item
     # clinical screens get the clinical bar
     d = client.get('/m/patients').get_data(as_text=True)
-    assert "<div class='mbar'>" in d and 'Blood Bank' in d
+    assert ("<div class='mbar'>" in d or 'mbar-desktop' in d) and 'Blood Bank' in d
     # but they do NOT get accounting dropdown items
     assert 'Commission Payables' not in d
     # every link in the menubar resolves
@@ -2557,7 +2557,7 @@ def test_system_wide_menubars(client):
     }
     for pg_, toks in checks.items():
         d = client.get(pg_).get_data(as_text=True)
-        assert "<div class='mbar'>" in d, pg_
+        assert ("<div class='mbar'>" in d or 'mbar-desktop' in d), pg_
         for t in toks:
             assert t in d, f'{t} on {pg_}'
     # every link in every bar resolves

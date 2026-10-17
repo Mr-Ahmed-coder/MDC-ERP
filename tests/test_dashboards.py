@@ -4,6 +4,9 @@ Verifies role-based views, branch isolation, SVG icons, dynamic attention chips,
 quick action scoping, empty DB safety, search branch scoping, and unauthenticated redirects.
 """
 import pytest
+import datetime as dt
+from sqlalchemy import select
+from sqlalchemy.dialects import postgresql
 from mdc_erp import create_app
 from mdc_erp.config import DevelopmentConfig
 from mdc_erp.models import User, Branch, Patient, Invoice
@@ -57,6 +60,15 @@ def test_unauthenticated_redirect(client):
     res = client.get('/dashboard')
     assert res.status_code == 302
     assert '/login' in res.location
+
+
+def test_today_patient_filter_binds_a_date_for_postgresql():
+    """PostgreSQL DATE(timestamp) must be compared to a date, not text."""
+    statement = select(Patient.id).where(
+        db.func.date(Patient.created) == dt.date.fromisoformat('2026-10-17')
+    )
+    compiled = statement.compile(dialect=postgresql.dialect())
+    assert list(compiled.params.values()) == [dt.date(2026, 10, 17)]
 
 def test_all_15_roles_load_dashboard(app, client):
     roles = [

@@ -119,8 +119,8 @@ def dashboard():
     cash_bal = _bal('1101')
     bank_bal = _bal('1102')
 
-    logins_today = LoginHistory.query.filter(db.func.date(LoginHistory.when) == today_s).count()
-    audits_today = Audit.query.filter(db.func.date(Audit.ts) == today_s).count()
+    logins_today = LoginHistory.query.filter(db.func.date(LoginHistory.when) == today_date).count()
+    audits_today = Audit.query.filter(db.func.date(Audit.ts) == today_date).count()
     recent_audits = Audit.query.order_by(Audit.id.desc()).limit(10).all()
 
     # ---- Live Widget Cards Generator (Using Clean SVG Icons) ----
@@ -445,7 +445,7 @@ def dashboard():
 
     days = [(dt.date.today() - dt.timedelta(days=i_d)) for i_d in range(6, -1, -1)]
     dlabels = [d.strftime('%a') for d in days]
-    dcounts = [pat_query.filter(db.func.date(Patient.created) == d.isoformat()).count() for d in days] if hasattr(Patient, 'created') else [0]*7
+    dcounts = [pat_query.filter(db.func.date(Patient.created) == d).count() for d in days] if hasattr(Patient, 'created') else [0]*7
     dmx = max([1] + dcounts); dW, dH, dpad = 680, 190, 24
     dbw = (dW - 48) / 7; dbars = ''
     for i_d, v in enumerate(dcounts):

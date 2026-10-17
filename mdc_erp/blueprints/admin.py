@@ -1437,7 +1437,7 @@ def system_health():
         backup_txt = 'Unavailable'
 
     # --- Users / logins / errors ---
-    _today = today()
+    _today = dt.date.today()
     _cutoff = dt.datetime.now(dt.timezone.utc).replace(tzinfo=None) - dt.timedelta(minutes=30)
     try:
         active_users = db.session.query(LoginHistory.username).filter(

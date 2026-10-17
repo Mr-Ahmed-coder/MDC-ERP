@@ -9,7 +9,7 @@ from sqlalchemy import select
 from sqlalchemy.dialects import postgresql
 from mdc_erp import create_app
 from mdc_erp.config import DevelopmentConfig
-from mdc_erp.models import User, Branch, Patient, Invoice
+from mdc_erp.models import Audit, Branch, Invoice, LoginHistory, Patient, User
 from mdc_erp.extensions import db
 
 class TestConfig(DevelopmentConfig):
@@ -64,11 +64,11 @@ def test_unauthenticated_redirect(client):
 
 def test_today_patient_filter_binds_a_date_for_postgresql():
     """PostgreSQL DATE(timestamp) must be compared to a date, not text."""
-    statement = select(Patient.id).where(
-        db.func.date(Patient.created) == dt.date.fromisoformat('2026-10-17')
-    )
-    compiled = statement.compile(dialect=postgresql.dialect())
-    assert list(compiled.params.values()) == [dt.date(2026, 10, 17)]
+    target_date = dt.date(2026, 10, 17)
+    for column in (Patient.created, LoginHistory.when, Audit.ts):
+        statement = select(Patient.id).where(db.func.date(column) == target_date)
+        compiled = statement.compile(dialect=postgresql.dialect())
+        assert list(compiled.params.values()) == [target_date]
 
 def test_all_15_roles_load_dashboard(app, client):
     roles = [

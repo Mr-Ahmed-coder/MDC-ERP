@@ -50,6 +50,9 @@ def dashboard():
     role_name = ROLE_LABEL.get(role, role or 'User')
     y = cur_year()
     today_s = today()
+    # PostgreSQL's DATE() returns a date value.  Bind a Python date here so it
+    # is not compared with the ISO date string used elsewhere in the dashboard.
+    today_date = dt.date.fromisoformat(today_s)
     eff_b = effective_branch(u)
 
     # ---- Scoped Database Queries (Branch Isolation Enforced) ----
@@ -66,7 +69,7 @@ def dashboard():
 
     pat_query = branch_scope(Patient.query, Patient)
     n_pat = pat_query.count()
-    pat_today = pat_query.filter(db.func.date(Patient.created) == today_s).count() if hasattr(Patient, 'created') else 0
+    pat_today = pat_query.filter(db.func.date(Patient.created) == today_date).count() if hasattr(Patient, 'created') else 0
 
     app_query = branch_scope(Appointment.query, Appointment)
     waiting = app_query.filter_by(status='Waiting').count()
